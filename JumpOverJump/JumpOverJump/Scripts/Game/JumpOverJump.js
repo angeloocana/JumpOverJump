@@ -1,4 +1,4 @@
-﻿var gameParams = {
+var gameParams = {
     game: {
          width: 1000, height: 650
     },
@@ -9,13 +9,15 @@
      }
 };
 
-var game = new Phaser.Game(gameParams.game.width, gameParams.game.height, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
 
 var board = function() {
-    var doForEachSquare = function(toDo){
+    var doForEachSquare = function (toDo) {
+        var isblack = false;
         for(var x = 0; x < 8; x++){
             for(var y = 0; y < 8; y++){
-                toDo(x,y);
+                toDo(x, y, isblack);
+                isblack = !isblack;
             }	
         }	
     };
@@ -25,17 +27,21 @@ var board = function() {
     };
 
     var load = function() {
-        doForEachSquare(function(x, y) {
-            game.load.spritesheet(getSquareKey(x, y), 'Images/game/square.png', 78, 78);
+        doForEachSquare(function (x, y, isblack) {
+            //game.load.spritesheet(getSquareKey(x, y), 'Images/game/square.png', 78, 78);
+            game.load.atlasJSONHash(getSquareKey(x, y), '../../assets/sprites/square.png', '../../assets/sprites/square.json');
         });
     };
     
     var create = function () {
 
-        doForEachSquare(function (x, y) {
+        doForEachSquare(function (x, y, isblack) {
             var px = (x * gameParams.board.square.width) + gameParams.board.borderX;
             var py = (y * gameParams.board.square.height) + gameParams.board.borderY;
             game.add.sprite(px, py, getSquareKey(x, y));
+            var animation = isblack ? "black" : "white";
+            game.animations.add(animation);
+            game.animations.play(animation, 1, false);
         });
     };
 

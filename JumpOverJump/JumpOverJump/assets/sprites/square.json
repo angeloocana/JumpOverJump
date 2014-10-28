@@ -1,0 +1,42 @@
+{
+    "frames": [
+
+        {
+            "filename": "white",
+            "frame": { "x": 0, "y": 0, "w": 78, "h": 78 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 78, "h": 78 },
+            "sourceSize": { "w": 78, "h": 78 }
+        },
+        {
+            "filename": "black",
+            "frame": { "x": 78, "y": 0, "w": 78, "h": 78 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 78, "h": 78 },
+            "sourceSize": { "w": 78, "h": 78 }
+        },
+        {
+            "filename": "canGo",
+            "frame": { "x": 156, "y": 0, "w": 78, "h": 78 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 156, "y": 0, "w": 78, "h": 78 },
+            "sourceSize": { "w": 78, "h": 78 }
+        },
+        {
+            "filename": "on",
+            "frame": { "x": 234, "y": 0, "w": 78, "h": 78 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 234, "y": 0, "w": 78, "h": 78 },
+            "sourceSize": { "w": 78, "h": 78 }
+        }
+    ],
+    "meta": {
+        "version": "1.0",
+        "image": "square.png",
+        "size": { "w": 312, "h": 78 }
+    }
+}
