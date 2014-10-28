@@ -7,6 +7,7 @@ JumpOverJump.Game = function(game) {
     this.boardX = 20;
     this.boardY = 20;
     this.ready = false;
+    this.selectedJumper = null;
 };
 
 JumpOverJump.Game.prototype = {	
@@ -33,14 +34,22 @@ JumpOverJump.Game.prototype = {
         square.animations.add('canGo', [2]);
         square.animations.add('on', [3]);
         square.defaultAnimation = isblack ? "black" : "white";
-        square.animations.play(square.defaultAnimation, 1, false);        
-        square.events.onInputDown.add(this.squareClicked, this);
+        square.animations.play(square.defaultAnimation, 1, false);                
         
         this.addSquare(x,y,square,null);            
     },
 
     squareClicked: function(object, pointer) {
-        console.log('boom');
+        console.log(object.x);
+        console.log(object.y);
+        console.log(object);
+        this.add.tween(this.selectedJumper).to({x:object.x, y:object.y}, 1000, Phaser.Easing.Quadratic.InOut, true);
+        this.resetSquaresAnimation();
+        this.squares[this.selectedJumper.square.x][this.selectedJumper.square.y].jumper = null;
+        this.squares[x][y].jumper = this.selectedJumper; 
+        this.squares[x][y].jumper.x = x;
+        this.squares[x][y].jumper.y = y;
+        this.selectedJumper = null;
     },
     
     buildSquares: function(){        
@@ -92,14 +101,17 @@ JumpOverJump.Game.prototype = {
     },
     
     jumperOver: function (object, pointer) {
-        this.whereJumperCanGo(object.square.x, object.square.y);
+        this.whereJumperCanGo(object);
     },
 
     jumperClicked: function(object, pointer) {
-        this.whereJumperCanGo(object.square.x, object.square.y);        
+        this.whereJumperCanGo(object);        
     },
     
-    whereJumperCanGo: function(x,y){
+    whereJumperCanGo: function(jumper){
+        var x = jumper.square.x;
+        var y = jumper.square.y;
+        this.selectedJumper = jumper;
         this.resetSquaresAnimation();
         
         if(this.squares[x-1])        
@@ -124,7 +136,8 @@ JumpOverJump.Game.prototype = {
         for(var x = 0; x < 8; x++){     
             for(var y = 0; y < 8; y++){                        
                 var square = this.squares[x][y].square;
-                console.log(square.animations.play(square.defaultAnimation, 1, false));
+                square.animations.play(square.defaultAnimation, 1, false);
+                square.events.onInputDown.remove(this.squareClicked, this);
             }	
         }	
     },
@@ -137,6 +150,7 @@ JumpOverJump.Game.prototype = {
                 var square = column[y].square;
                 if(jumper == null || jumper == undefined){
                     square.animations.play("canGo", 1, false);
+                    square.events.onInputDown.add(this.squareClicked, this);
                 }
             } 
     },
