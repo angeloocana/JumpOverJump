@@ -1,0 +1,26 @@
+{
+    "frames": [
+
+        {
+            "filename": "white",
+            "frame": { "x": 0, "y": 0, "w": 75, "h": 75 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 75, "h": 75 },
+            "sourceSize": { "w": 75, "h": 75 }
+        },
+        {
+            "filename": "black",
+            "frame": { "x": 75, "y": 0, "w": 75, "h": 75 },
+            "rotated": false,
+            "trimmed": true,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 75, "h": 75 },
+            "sourceSize": { "w": 75, "h": 75 }
+        }
+    ],
+    "meta": {
+        "version": "1.0",
+        "image": "jumper.png",
+        "size": { "w": 150, "h": 75 }
+    }
+}

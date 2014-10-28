@@ -1,7 +1,7 @@
 JumpOverJump.Game = function(game) {
     this.background = null;
     this.jumpers = null;
-    this.squares = [];
+    this.squares = [[]];
     this.squareWidth = 78;
     this.squareHeight = 78;
     this.boardX = 20;
@@ -16,13 +16,14 @@ JumpOverJump.Game.prototype = {
 
 	create: function () {
         this.buildSquares();
+        this.buildJumpers();
 	},
     
     getSquareKey : function(x,y){
         return 'square' + x + '_' + y;
     },
     
-    createSquare: function (squareIndex, x, y, isblack) {
+    createSquare: function (x, y, isblack) {
         var px = (x * this.squareWidth) + this.boardX;
         var py = (y * this.squareHeight) + this.boardY;
         var squareAnimation = isblack ? "black" : "white";
@@ -34,32 +35,66 @@ JumpOverJump.Game.prototype = {
         square.events.onInputDown.add(this.squareClicked, this);
         square.events.onInputOver.add(this.squareOver, this);
         square.events.onInputOut.add(this.squareOut, this);
-        this.squares[squareIndex] = square;
+        
+        this.addSquare(x,y,square,null);            
     },
     
     squareOver: function (object, pointer) {
+        object.alpha = 0.5;
+    },
 
-    object.alpha = 0.5;
-},
+    squareOut: function(object, pointer) {
+        object.alpha = 1;
+    },
 
-squareOut: function(object, pointer) {
-    object.alpha = 1;
-},
-
-squareClicked: function(object, pointer) {
-
+    squareClicked: function(object, pointer) {
         console.log('boom');
-
-},
+    },
     
     buildSquares: function(){        
         var isblack = false;
-        var squareIndex = 0;
-        for(var y = 0; y < 8; y++){
-            for(var x = 0; x < 8; x++){            
-                this.createSquare(squareIndex, x, y, isblack);
+        for(var x = 0; x < 8; x++){            
+            for(var y = 0; y < 8; y++){
+                this.createSquare(x, y, isblack);
                 isblack = !isblack;
-                squareIndex++;
+            }	
+            isblack = !isblack;
+        }	
+    },
+    
+    createJumper: function (x, y, isblack) {
+        var px = (x * this.squareWidth) + this.boardX;
+        var py = (y * this.squareHeight) + this.boardY;
+        var squareAnimation = isblack ? "black" : "white";
+        var jumper = this.add.sprite(px, py, 'jumper');
+        jumper.inputEnabled = true;
+        jumper.animations.add('white'[0]);
+        jumper.animations.add('black',[1]);
+        jumper.animations.play(squareAnimation, 1, false);
+        jumper.events.onInputDown.add(this.squareClicked, this);
+        jumper.events.onInputOver.add(this.squareOver, this);
+        jumper.events.onInputOut.add(this.squareOut, this);
+        
+        this.addSquare(x,y,null,jumper);            
+    },
+    
+    addSquare: function(x, y, square, jumper){
+        if(this.squares == undefined)
+            this.squares = new Array();
+        if(this.squares[x] == undefined)
+            this.squares[x] = new Array();
+        
+        this.squares[x][y] = {
+            square : square == null ? this.squares[x][y].square : square, 
+            jumper : jumper
+        };
+    },
+    
+    buildJumpers: function(){        
+        var isblack = false;
+        for(var y = 0; y < 8; y = y + 7){            
+            for(var x = 0; x < 8; x++){                        
+                this.createJumper(x, y, isblack);
             }	
             isblack = !isblack;
         }	

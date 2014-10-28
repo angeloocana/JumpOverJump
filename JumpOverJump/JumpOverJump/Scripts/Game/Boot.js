@@ -5,7 +5,7 @@ JumpOverJump.Boot = function(game) {};
 JumpOverJump.Boot.prototype = {
     preload: function() {
         this.load.image('background','../../Images/game/background.jpg');		
-        this.load.image('jumper','../../Images/game/jumper.png');
+        this.load.atlasJSONHash('jumper', '../../assets/sprites/jumper.png', '../../assets/sprites/jumper.json');
         this.load.atlasJSONHash('square', '../../assets/sprites/square.png', '../../assets/sprites/square.json');
     },
     
