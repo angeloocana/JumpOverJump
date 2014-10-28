@@ -1,3 +1,7 @@
+
+@{
+    Layout = null;
+}
 <!DOCTYPE html>
 
 <html>
@@ -22,7 +26,7 @@
     <script type="text/javascript">
         window.onload = function() {
             var game = new Phaser.Game(1000, 750, Phaser.AUTO, 'gameContainer');
-            game.state.add('Boot', JumpOverJump.Boot);
+            game.state.add('Boot', JumpOverJump.Boot);            
             game.state.add('Game', JumpOverJump.Game);
             game.state.start('Boot');
         }

@@ -26,12 +26,13 @@ JumpOverJump.Game.prototype = {
     createSquare: function (x, y, isblack) {
         var px = (x * this.squareWidth) + this.boardX;
         var py = (y * this.squareHeight) + this.boardY;
-        var squareAnimation = isblack ? "black" : "white";
         var square = this.add.sprite(px, py, 'square');
         square.inputEnabled = true;
         square.animations.add('white'[0]);
         square.animations.add('black',[1]);
-        square.animations.play(squareAnimation, 1, false);
+        square.animations.add('canGo',[2]);
+        square.defaultAnimation = isblack ? "black" : "white";
+        square.animations.play(square.defaultAnimation, 1, false);
         square.events.onInputDown.add(this.squareClicked, this);
         square.events.onInputOver.add(this.squareOver, this);
         square.events.onInputOut.add(this.squareOut, this);
@@ -62,19 +63,29 @@ JumpOverJump.Game.prototype = {
         }	
     },
     
+    buildJumpers: function(){        
+        var isblack = false;
+        for(var y = 0; y < 8; y = y + 7){            
+            for(var x = 0; x < 8; x++){                        
+                this.createJumper(x, y, isblack);
+            }	
+            isblack = !isblack;
+        }	
+    },
+    
     createJumper: function (x, y, isblack) {
         var px = (x * this.squareWidth) + this.boardX;
         var py = (y * this.squareHeight) + this.boardY;
-        var squareAnimation = isblack ? "black" : "white";
+        var jumperAnimation = isblack ? "black" : "white";
         var jumper = this.add.sprite(px, py, 'jumper');
         jumper.inputEnabled = true;
         jumper.animations.add('white'[0]);
         jumper.animations.add('black',[1]);
-        jumper.animations.play(squareAnimation, 1, false);
-        jumper.events.onInputDown.add(this.squareClicked, this);
-        jumper.events.onInputOver.add(this.squareOver, this);
-        jumper.events.onInputOut.add(this.squareOut, this);
-        
+        jumper.animations.play(jumperAnimation, 1, false);
+        jumper.events.onInputDown.add(this.jumperClicked, this);
+        jumper.events.onInputOver.add(this.jumperOver, this);
+        jumper.events.onInputOut.add(this.jumperOut, this);
+        jumper.square = {x:x,y:y};
         this.addSquare(x,y,null,jumper);            
     },
     
@@ -90,14 +101,59 @@ JumpOverJump.Game.prototype = {
         };
     },
     
-    buildJumpers: function(){        
-        var isblack = false;
+    jumperOver: function (object, pointer) {
+        object.alpha = 0.5;
+    },
+
+    jumperOut: function(object, pointer) {
+        object.alpha = 1;
+    },
+
+    jumperClicked: function(object, pointer) {
+        this.whereJumperCanGo(object.square.x, object.square.y);        
+    },
+    
+    whereJumperCanGo: function(x,y){
+        this.resetSquaresAnimation();
+        
+        if(this.squares[x-1])        
+        {            
+            this.jumperCanGo(x-1,y-1);   
+            this.jumperCanGo(x-1,y);   
+            this.jumperCanGo(x-1,y+1);   
+        }
+            
+        this.jumperCanGo(x,y-1);   
+        this.jumperCanGo(x,y+1);   
+         
+        if(this.squares[x+1])        
+        {            
+            this.jumperCanGo(x+1,y-1);   
+            this.jumperCanGo(x+1,y);   
+            this.jumperCanGo(x+1,y+1);   
+        }
+    },
+    
+    resetSquaresAnimation : function(){
         for(var y = 0; y < 8; y = y + 7){            
-            for(var x = 0; x < 8; x++){                        
-                this.createJumper(x, y, isblack);
+            for(var x = 0; x < 8; x++){     
+                var square = this.squares[x][y].square;
+                console.log(square.defaultAnimation);
+                square.animations.play(square.defaultAnimation, 1, false);
             }	
-            isblack = !isblack;
         }	
+    },
+    
+    jumperCanGo: function(x,y){
+        var column = this.squares[x];
+        if(column[y])
+            {
+                var jumper = column[y].jumper;
+                var square = column[y].square;
+                if(jumper == null || jumper == undefined){
+                    square.animations.play("canGo", 1, false);
+                }
+            } 
     },
 
 	update: function () {

@@ -22,7 +22,7 @@
             "frame": { "x": 156, "y": 0, "w": 78, "h": 78 },
             "rotated": false,
             "trimmed": true,
-            "spriteSourceSize": { "x": 156, "y": 0, "w": 78, "h": 78 },
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 78, "h": 78 },
             "sourceSize": { "w": 78, "h": 78 }
         },
         {
@@ -30,7 +30,7 @@
             "frame": { "x": 234, "y": 0, "w": 78, "h": 78 },
             "rotated": false,
             "trimmed": true,
-            "spriteSourceSize": { "x": 234, "y": 0, "w": 78, "h": 78 },
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 78, "h": 78 },
             "sourceSize": { "w": 78, "h": 78 }
         }
     ],
