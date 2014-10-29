@@ -92,7 +92,6 @@ JumpOverJump.Game.prototype = {
     },
     
     whereJumperCanGo: function(jumper){
-        console.log('whereJumperCanGo');
         var x = jumper.board.x;
         var y = jumper.board.y;
         this.selectedJumperIndex = jumper.i;
@@ -133,12 +132,12 @@ JumpOverJump.Game.prototype = {
         }
     },
     
-    jumperCanGo: function(x,y,isAJump){             
-        if(isAJump == true){
-            console.log(' x: '+  x  + ' y:' + y);
-        }
+    jumperCanGo: function(x,y,isAJump){                     
+        if(x < 0 || y < 0 || x >= this.squares.length || y >= this.squares.length)
+            return;
         
         isAJump = typeof isAJump !== 'undefined' ? isAJump : false;        
+        //console.log('x:' + x + ' y:' + y);
         var column = this.squares[x];
         if(column[y])
         {                
@@ -153,20 +152,42 @@ JumpOverJump.Game.prototype = {
                         var jx = jumper.board.x;
                         var jy = jumper.board.y;
                         
-                        if(jx == x){
-                            if(jy > y)
+                        if(x > jx){ //Coluna a direita
+                            if(jy == y)
+                                jx = x+1;
+                            else if(y > jy)//Linha de baixo
+                            {
+                                jx = x + 1;    
+                                jy = y + 1;
+                            }
+                            else if(y < jy) //Linha de cima
+                            {
+                                jx = x + 1;    
+                                jy = y - 1;
+                            }
+                        }
+                        else if(x < jx){ //Coluna a esquerda
+                            if(jy == y)
+                                jx = x-1;
+                            else if(y > jy)//Linha de baixo
+                            {
+                                jx = x - 1;    
+                                jy = y + 1;
+                            }
+                            else if(y < jy)//Linha de cima
+                            {
+                                jx = x - 1;    
+                                jy = y - 1;
+                            }
+                        }
+                        else if(x == jx){ //mesa coluna
+                            if(y < jy)//Linha de cima
                                 jy = y-1;   
-                            else
+                            else if(y > jy)//Linha de baixo
                                 jy = y+1; 
-                        }                        
-                        else if(jy == y){
-                            if(jx > x)
-                                jx = x-1; 
-                            else
-                                jx = x+1; 
                         }
                         
-                        console.log('jx: ' + jx +' x: '+  x +' jy: '+ jy + ' y:' + y);
+                        //console.log('jx: ' + jx +' x: '+  x +' jy: '+ jy + ' y:' + y);
                         this.jumperCanGo(jx,jy,true);
                     }
                     return false;
