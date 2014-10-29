@@ -84,7 +84,7 @@ JumpOverJump.Game.prototype = {
     },
         
     jumperOver: function (object, pointer) {
-        this.whereJumperCanGo(object);
+        //this.whereJumperCanGo(object);
     },
 
     jumperClicked: function(object, pointer) {
@@ -92,6 +92,7 @@ JumpOverJump.Game.prototype = {
     },
     
     whereJumperCanGo: function(jumper){
+        console.log('whereJumperCanGo');
         var x = jumper.board.x;
         var y = jumper.board.y;
         this.selectedJumperIndex = jumper.i;
@@ -123,17 +124,53 @@ JumpOverJump.Game.prototype = {
                 square.events.onInputDown.remove(this.squareClicked, this);
             }	
         }	
+        
+        var jumper = this.getSelectedJumper();
+        if(jumper)
+        {            
+            var square = this.squares[jumper.board.x][jumper.board.y];
+            square.animations.play("on", 1, false);
+        }
     },
     
-    jumperCanGo: function(x,y){                
+    jumperCanGo: function(x,y,isAJump){             
+        if(isAJump == true){
+            console.log(' x: '+  x  + ' y:' + y);
+        }
+        
+        isAJump = typeof isAJump !== 'undefined' ? isAJump : false;        
         var column = this.squares[x];
         if(column[y])
         {                
             //console.log('for  x:' + this.selectedJumper.square.x + ' y:'+ this.selectedJumper.square.y);
             for(var i = 0; i < this.jumpers.length; i++){                
-                console.log('jx: ' + this.jumpers[i].x +' x: '+  x +' jy: '+ this.jumpers[i].y + ' y:' + y);
+                //console.log('jx: ' + this.jumpers[i].x +' x: '+  x +' jy: '+ this.jumpers[i].y + ' y:' + y);
                 if(this.jumpers[i].board.x == x && this.jumpers[i].board.y == y)
+                {
+                    if(isAJump == false)
+                    {                        
+                        var jumper = this.getSelectedJumper();
+                        var jx = jumper.board.x;
+                        var jy = jumper.board.y;
+                        
+                        if(jx == x){
+                            if(jy > y)
+                                jy = y-1;   
+                            else
+                                jy = y+1; 
+                        }                        
+                        else if(jy == y){
+                            if(jx > x)
+                                jx = x-1; 
+                            else
+                                jx = x+1; 
+                        }
+                        
+                        console.log('jx: ' + jx +' x: '+  x +' jy: '+ jy + ' y:' + y);
+                        this.jumperCanGo(jx,jy,true);
+                    }
                     return false;
+                }
             }
             
             var square = column[y];
