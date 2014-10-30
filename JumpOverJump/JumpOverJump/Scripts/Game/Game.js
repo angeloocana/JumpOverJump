@@ -8,17 +8,42 @@ JumpOverJump.Game = function(game) {
     this.boardY = 20;
     this.ready = false;
     this.selectedJumperIndex = null;
+    this.isWhiteTurn = true;
+    this.isJumping = false;
+    this.jumpSquares = [];
+    this.btnDone = null;
 };
 
 JumpOverJump.Game.prototype = {	
 	preload: function () {
-		this.background = this.add.image(0, 0, 'background');
+		this.background = this.add.image(0, 0, 'background');        
 	},
 
 	create: function () {
         this.buildSquares();
         this.buildJumpers();
+        this.buildBtnDone();
 	},
+    
+    changeTurn: function(){
+        this.isWhiteTurn = !this.isWhiteTurn;
+        this.btnDone.text = this.isWhiteTurn ? "White turn" : "Black turn";
+    },
+    
+    buildBtnDone: function(){
+        this.btnDone = this.add.text(700, 300, "White turn", { font: "35px Arial", fill: "#ff0044", align: "center" });
+        this.btnDone.inputEnabled = true;
+        this.btnDone.events.onInputDown.add(this.btnDoneClicked, this);    
+    },
+    
+    btnDoneClicked: function(btn, pointer){
+        if(this.isJumping)
+        {
+            this.changeTurn();
+            this.isJumping = false;
+            this.resetSquaresAnimation();
+        }
+    },
     
     buildSquares: function(){        
         var isblack = false;
@@ -67,19 +92,20 @@ JumpOverJump.Game.prototype = {
         }	
     },
     
-    createJumper: function (x, y, isblack) {
+    createJumper: function (x, y, isBlack) {
         var px = (x * this.squareWidth) + this.boardX;
         var py = (y * this.squareHeight) + this.boardY;
-        var jumperAnimation = isblack ? "jblack" : "jwhite";
+        var jumperAnimation = isBlack ? "black" : "white";
         var jumper = this.add.sprite(px, py, 'jumper');
         jumper.inputEnabled = true;
-        jumper.animations.add('jwhite'[0]);
-        jumper.animations.add('jblack',[1]);
+        jumper.animations.add('white'[0]);
+        jumper.animations.add('black',[1]);
         jumper.animations.play(jumperAnimation, 1, false);
         jumper.events.onInputDown.add(this.jumperClicked, this);
         jumper.events.onInputOver.add(this.jumperOver, this);
         jumper.board = {x:x,y:y};
         jumper.i = this.jumpers.length;
+        jumper.isBlack = isBlack;
         this.jumpers[jumper.i] = jumper;
     },
         
@@ -87,11 +113,16 @@ JumpOverJump.Game.prototype = {
         //this.whereJumperCanGo(object);
     },
 
-    jumperClicked: function(object, pointer) {
-        this.whereJumperCanGo(object);        
+    jumperClicked: function(jumper, pointer) {
+        if(this.isWhiteTurn == jumper.isBlack)
+            if(this.isJumping == false || this.selectedJumperIndex == null || this.selectedJumperIndex == jumper.i)
+                this.whereJumperCanGo(jumper);        
     },
     
     whereJumperCanGo: function(jumper){
+        if(this.isJumping == false)
+            this.jumpSquares = [];
+        
         var x = jumper.board.x;
         var y = jumper.board.y;
         this.selectedJumperIndex = jumper.i;
@@ -194,20 +225,48 @@ JumpOverJump.Game.prototype = {
                 }
             }
             
+            if(this.isJumping == true && isAJump == false)
+                return;
+            
+            if(isAJump)
+                this.jumpSquares[this.jumpSquares.length] = {x:x,y:y};
+            
             var square = column[y];
             square.animations.play("canGo", 1, false);
             square.events.onInputDown.add(this.squareClicked, this);
         } 
     },
     
-    squareClicked: function(square, pointer) {
+    squareClicked: function(square, pointer) {        
         var selectedJumper = this.getSelectedJumper();
         this.add.tween(selectedJumper).to({x:square.x, y:square.y}, 1000, Phaser.Easing.Quadratic.InOut, true);
         
         selectedJumper.board.x = square.board.x;
         selectedJumper.board.y = square.board.y;
-        this.jumpers[selectedJumper.i] = selectedJumper;
-        this.whereJumperCanGo(selectedJumper);
+        this.jumpers[selectedJumper.i] = selectedJumper;        
+        
+        if(this.isAJumpingSquare(square.board.x,square.board.y))
+        {
+            this.isJumping = true;
+            this.btnDone.text = "I'm done";
+            this.whereJumperCanGo(selectedJumper);
+        }
+        else
+        {
+            this.changeTurn();
+            this.isJumping = false;
+            this.selectedJumperIndex = null;
+            this.resetSquaresAnimation();
+        }
+    },
+    
+    isAJumpingSquare: function(x,y){
+        for(var i = 0; i < this.jumpSquares.length; i++){
+            //console.log('x: '+ x + ' y:' + y);
+            if(this.jumpSquares[i].x == x && this.jumpSquares[i].y == y)
+                return true;
+        }
+        return false;
     },
     
     getSelectedJumper: function(){
