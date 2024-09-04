@@ -1,0 +1,40 @@
+{
+        "SAVE_TO_TEST": "Salvar para teste",
+        "NEW_GAME": "Novo Jogo",
+        "NEW_GAME_OFFLINE": "Novo jogo Offline",
+        "NEW_GAME_VS_COMPUTER": "Novo Jogo x Computador",
+        "NEW_GAME_ONLINE": "Novo Jogo Online",
+
+        "SWITCH_PLAYERS": "Inverter Jogadores",
+
+        "ENTER_PLAYER_NAMES": "Digite o nome dos jogadores",
+
+        "PLAY": "Jogar",
+
+        "DOWNLOAD": "Baixar",
+
+        "WHITE_TURN": "Vez das brancas",
+        "BLACK_TURN": "Vez das pretas",
+        "BLACK_WIN": "Pretas venceram",
+        "WHITE_WIN": "Brancas venceram",
+        "WHITE": "Branco",
+        "BLACK": "Preto",
+
+        "WHITE_PLAYER_NAME": "Nome Jogador Branco:",
+        "BLACK_PLAYER_NAME": "Nome Jogador Preto:",
+
+        "SHOW_MOVES": "Mostrar Jogadas",
+
+        "BACK_MOVE": "Voltar Jogada",
+
+        "WON_POSITIONS": "Posições Domindas",
+        "JUMPS": "Pulos",
+        "N_MOVES": "Nº Jogadas",
+        "Points": "Pontos",
+
+        "LANGUAGE": "Idioma",
+                
+        "CREATE_ACCOUNT": "Cadastre-se",
+        "SIGN_IN": "Login",
+        "NOT_REGISTERED": "Ainda não tem cadastro?"        
+    }

@@ -1,0 +1,38 @@
+<ion-view view-title="{{'ENTER_PLAYER_NAMES' | translate}}">
+    <ion-content class="app-background-color">
+        <div class="row  responsive-sm">
+            <div class="col {{firstCol}}  joj-col">
+                <a class="button icon-left button-block button-balanced button-large ion-ios-game-controller-b joj-col-btn"
+                   ng-click="play()">
+                    {{ "PLAY" | translate }}
+                </a>
+            </div>
+            <div class="col  {{secondCol}}  joj-col">
+                <a class="button icon-left button-block ion-arrow-swap button-assertive button-large joj-col-btn"
+                   ng-click="switchPlayers()">
+                    {{ "SWITCH_PLAYERS" | translate }}
+                </a>
+            </div>
+        </div>
+        <div class="row responsive-sm">
+            <div class="col  {{firstCol}}  joj-col">
+                <div class="list joj-enter-player-name-list  no-margin">
+                    <label class="item item-input item-stacked-label">
+                        <span class="input-label" translate="WHITE_PLAYER_NAME"></span>
+                        <input type="text" placeholder="{{'WHITE' | translate}}" ng-model="players.white.name" />
+                    </label>
+                </div>
+                <joj-player player="players.white" run-on-help-on-changed="helpOnChanged"></joj-player>
+            </div>
+            <div class="col  {{secondCol}}  joj-col">
+                <div class="list joj-enter-player-name-list  joj-black-player  no-margin">
+                    <label class="item item-input item-stacked-label  joj-black-player">
+                        <span class="input-label  joj-black-player" translate="BLACK_PLAYER_NAME"></span>
+                        <input type="text" placeholder="{{'BLACK' | translate}}" ng-model="players.black.name" />
+                    </label>
+                </div>
+                <joj-player player="players.black" is-black="true" run-on-help-on-changed="helpOnChanged"></joj-player>
+            </div>
+        </div>
+    </ion-content>
+</ion-view>

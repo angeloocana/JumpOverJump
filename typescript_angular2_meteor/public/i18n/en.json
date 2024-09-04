@@ -1,0 +1,39 @@
+{
+        "SAVE_TO_TEST":"Save to test",
+        "NEW_GAME":"New Game",
+        "NEW_GAME_OFFLINE": "New Game Offline",
+        "NEW_GAME_VS_COMPUTER": "New Game vs Computer",
+        "NEW_GAME_ONLINE": "New Game Online",
+
+        "SWITCH_PLAYERS":"Switch players",
+        "ENTER_PLAYER_NAMES":"Enter Players Names",
+
+        "PLAY":"Play",
+
+        "DOWNLOAD":"Download",
+
+        "WHITE_TURN": "White turn",
+        "BLACK_TURN": "Black turn",
+        "BLACK_WIN": "Black Win!",
+        "WHITE_WIN": "White Win!",
+        "SHOW_MOVES": "Show Moves",
+
+        "WHITE": "White",
+        "BLACK": "Black",
+
+        "WHITE_PLAYER_NAME": "White Player Name:",
+        "BLACK_PLAYER_NAME": "Black Player Name:",
+
+        "WON_POSITIONS": "Won Positions",
+        "JUMPS": "Jumps",
+        "N_MOVES": "Nº Moves",
+        "Points": "Points",
+
+        "BACK_MOVE": "Back Move",
+
+        "LANGUAGE": "Language",
+        "LANGUAGES_SELECT_YOUR_COUNTRY": "Choose your language.",
+        "CREATE_ACCOUNT": "Create account",
+        "SIGN_IN": "Sign in",
+        "NOT_REGISTERED": "Not registered?"        
+    }
