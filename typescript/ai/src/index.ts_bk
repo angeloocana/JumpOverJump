@@ -1,0 +1,410 @@
+import J from 'joj-core';
+import { random } from 'ptz-math';
+
+// tslint:disable:align
+function addBestMove(boardSizeY: number, bestMoves: J.IMove[][][], positionsAHead: number,
+    from: J.IPosition, to: J.IPosition,
+    level: number, isBlack: boolean): J.IMove[][][] {
+
+    if (!bestMoves)
+        bestMoves = [];
+
+    if (!bestMoves[level])
+        bestMoves[level] = [];
+
+    const positionsAHeadOnMove =
+        J.Position.getY0Start(boardSizeY, to.y, isBlack)
+        - J.Position.getY0Start(boardSizeY, from.y, isBlack);
+
+    const indexPositionsAHead = positionsAHead + positionsAHeadOnMove;
+
+    if (!bestMoves[level][indexPositionsAHead])
+        bestMoves[level][indexPositionsAHead] = [];
+
+    const bestMoveIndex
+        = bestMoves[level][indexPositionsAHead].findIndex(
+            bestMove =>
+                bestMove.from.x === from.x
+                && bestMove.from.y === from.y
+                && bestMove.to.x === to.x
+                && bestMove.to.y === to.y
+        );
+
+    if (bestMoveIndex >= 0)
+        return bestMoves;
+
+    if (indexPositionsAHead < 0)
+        return bestMoves;
+
+    if (!bestMoves[level][indexPositionsAHead])
+        bestMoves[level][indexPositionsAHead] = [];
+
+    bestMoves[level][indexPositionsAHead].push({
+        from,
+        to
+    });
+
+    return bestMoves;
+}
+
+function getBestLevel(bestMoves: J.IMove[][][]): number {
+    let bestLevel = 0;
+
+    for (let k = 0; k < bestMoves.length; k++) {
+        const bestMove = bestMoves[k];
+        const bestMoveBestLevel = bestMove[bestLevel];
+
+        if (bestMove.length > bestMoveBestLevel.length
+            && bestMove[bestMove.length - 1].length > 0)
+            bestLevel = k;
+    }
+
+    return bestLevel;
+}
+
+function getWinPosition(boardSizeY: number, winPositions, x: number, isBlack: boolean): J.IMove {
+    const winPosition = winPositions[x];
+    if (winPosition && winPosition.length > 0 && winPosition[0].to) {
+        for (let i = 0; i < winPosition.length; i++) {
+            if (winPosition[i].to) {
+                const move = winPosition[i].to.lastMove
+                    ? winPosition[i].to.lastMove
+                    : winPosition[i];
+                if (J.Position.getY0Start(boardSizeY, move.from.y, isBlack) < 7)
+                    return move;
+            }
+        }
+    }
+}
+
+function getDistance(boardSizeY: number, piece: J.IPiece, isBlack: boolean): number[] {
+
+    const winPositions: number[] = [];
+    for (let x = 0; x < 8; x++) {
+        const y = J.Position.getY0End(boardSizeY, piece.y, isBlack);
+        let xDistance = x - piece.x;
+
+        if (xDistance < 0)
+            xDistance = xDistance * -1;
+
+        let moves = xDistance > y || y === 0
+            ? xDistance
+            : y;
+
+        if (moves > 1) {
+            for (let i = 0; i < piece.whereCanIGo.length; i++) {
+                const to = piece.whereCanIGo[i];
+                const toY = J.Position.getY0End(boardSizeY, to.y, isBlack);
+                let toXDistance = x - to.x;
+                if (toXDistance < 0)
+                    toXDistance = toXDistance * -1;
+
+                const toMoves = (toXDistance > toY || toY === 0 ? toXDistance : toY) + 1;
+                if (toMoves < moves)
+                    moves = toMoves;
+            }
+        }
+
+        winPositions[x] = moves < 0
+            ? moves * -1
+            : moves;
+    }
+
+    return winPositions;
+}
+
+function getNMovesToWin(pieces: J.IPiece[], isBlack: boolean): J.IPiece[][][] {
+
+    pieces.forEach(piece =>
+        piece.movesToWin = getDistance(piece, isBlack));
+
+    const winPositions: J.IPiece[][][] = [];
+    for (let x = 0; x < 8; x++) {
+        if (!winPositions[x])
+            winPositions[x] = [];
+
+        for (let j = 0; j < pieces.length; j++) {
+            const piece = pieces[j];
+            if (!winPositions[x][piece.movesToWin[x]])
+                winPositions[x][piece.movesToWin[x]] = [];
+            winPositions[x][piece.movesToWin[x]].push(piece);
+        }
+    }
+
+    return winPositions;
+}
+
+function isGameEnding(boardSizeY: number, allPieces: J.IPiece[], isBlack: boolean): boolean {
+    for (let i = 0; i < allPieces.length; i++) {
+        const piece = allPieces[i];
+        if (J.Position.getY0Start(boardSizeY, piece.y, isBlack) < 4)
+            return false;
+    }
+
+    return true;
+}
+
+function getLastMoveToWin(nMovesToWin: J.IPiece[][]): number {
+    for (let i = 0; i < nMovesToWin.length; i++) {
+        if (nMovesToWin[i])
+            return i;
+    }
+
+    return 10;
+}
+
+function getPiecesFurtherAway(pieces: J.IPiece[], isBlack: boolean): number {
+
+    let lastMoveToWin = -1;
+    const nMovesToWin = getNMovesToWin(pieces, isBlack);
+    for (let i = 0; i < nMovesToWin.length; i++) {
+        const nMoves = getLastMoveToWin(nMovesToWin[i]);
+        if (nMoves > lastMoveToWin)
+            lastMoveToWin = nMoves;
+    }
+    return lastMoveToWin;
+}
+
+/**
+ * $Fix
+ * I do NOT know why it has to funcs getBestMove.
+ */
+function getBestMove2(game: J.IGame, moves: J.IMove[], isBlack: boolean): J.IMove {
+
+    const bestMove = [];
+    for (let i = 0; i < moves.length; i++) {
+        // $Fix
+        // const gameCopy = game.getNewCopy();
+        const move = moves[i];
+
+        let pieces = J.Game.getTurnPieces(game);
+        const boardAfterMove = J.Move.getBoardAfterMove(game.board, move);
+
+        pieces = J.Board.getPiecesWhereCanIGo(boardAfterMove, pieces);
+        const furtherPiece =
+            getPiecesFurtherAway(pieces, isBlack);
+        if (!bestMove[furtherPiece])
+            bestMove[furtherPiece] = [];
+
+        bestMove[furtherPiece].push(move);
+    }
+
+    for (let j = 0; j < bestMove.length; j++) {
+        if (bestMove[j]) {
+            const randomIndex = random(1, bestMove[j].length) - 1;
+            return bestMove[j][randomIndex];
+        }
+    }
+}
+
+function getMoveNearWinPosition(allPieces: J.IPiece[],
+    moves: J.IMove[], orderedPieces: J.IPiece[][],
+    winPositions, isBlack: boolean,
+    game: J.IGame): J.IMove {
+
+    let winMove: J.IMove;
+
+    if (isGameEnding(allPieces, isBlack)) {
+        if (winPositions && winPositions.length > 0) {
+            winMove = getWinPosition(winPositions, 0, isBlack);
+            if (winMove) return winMove;
+            winMove = getWinPosition(winPositions, 7, isBlack);
+            if (winMove) return winMove;
+        }
+
+        // winMove = getWinPositionOrganized(winPositions, isBlack);
+        // if (winMove) return winMove;
+
+        winMove = getWinPosition(winPositions, 1, isBlack);
+        if (winMove) return winMove;
+        winMove = getWinPosition(winPositions, 3, isBlack);
+        if (winMove) return winMove;
+        winMove = getWinPosition(winPositions, 5, isBlack);
+        if (winMove) return winMove;
+    }
+
+    const winPositionEmpty = [];
+    const winAndPreWinPositionEmpty = [];
+
+    if (orderedPieces[7]) {
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+            let empty = true;
+            let emptyPreWin = true;
+
+            for (let j = 0; j < orderedPieces[7].length; j++) {
+                const piece = orderedPieces[7][j];
+                if (piece && piece.x === move.to.x) {
+                    empty = false;
+                }
+            }
+
+            if (orderedPieces[6])
+                for (let j = 0; j < orderedPieces[6].length; j++) {
+                    const piece = orderedPieces[6][j];
+                    if (piece && piece.x === move.to.x) {
+                        emptyPreWin = false;
+                    }
+                }
+            if (empty) {
+                winPositionEmpty.push(move);
+                if (emptyPreWin)
+                    winAndPreWinPositionEmpty.push(move);
+            }
+        }
+    }
+
+    const positions = winAndPreWinPositionEmpty.length > 0 ? winAndPreWinPositionEmpty : winPositionEmpty;
+
+    const chosenMove = getBestMove(game, (positions.length > 0 ? positions : moves), isBlack);
+    return chosenMove;
+}
+
+function addWinPositions(from, to, winPositions, level, isBlack) {
+    if (!to) {
+        if (J.Position.getY0Start(from.y, isBlack) === 7) {
+            if (!winPositions[from.x])
+                winPositions[from.x] = [];
+
+            for (let i = 0; i < winPositions[from.x].length; i++) {
+                const winPosition = winPositions[from.x][i];
+                if (winPosition.from.x === from.x &&
+                    winPosition.from.y === from.y)
+                    return winPositions;
+            }
+
+            winPositions[from.x].push({
+                from,
+                level
+            });
+        }
+    } else {
+        if (J.Position.getY0Start(to.y, isBlack) === 7) {
+            if (!winPositions[to.x])
+                winPositions[to.x] = [];
+
+            for (let i = 0; i < winPositions[to.x].length; i++) {
+                const winPosition = winPositions[to.x][i];
+                if (winPosition.from.x === from.x &&
+                    winPosition.from.y === from.y)
+                    return winPositions;
+            }
+
+            winPositions[to.x].push({
+                from,
+                to,
+                level
+            });
+        }
+    }
+    return winPositions;
+}
+
+function addBestMovesAfterMove(piece: J.IPiece,
+    fromY: number, lastMove: J.IMove, game: J.IGame, isBlack: boolean,
+    bestMoves, winPositions) {
+
+    const gameAfterMove = J.Move.getGameAfterMove(game, lastMove);
+
+    const whereCanIGoAfterMove = J.Board.getPositionsWhereCanIGo(gameAfterMove.board, piece);
+    if (piece.whereCanIGo.orderedPositions.length < whereCanIGoAfterMove.orderedPositions.length) {
+        const higherPositions = whereCanIGoAfterMove.orderedPositions[whereCanIGoAfterMove.orderedPositions.length - 1];
+        for (let p = 0; p < higherPositions.length; p++) {
+            const to = higherPositions[p];
+            if (to) {
+                to.lastMove = lastMove;
+                const toY = J.Position.getY0Start(to.y, isBlack);
+                bestMoves = addBestMove(bestMoves, (toY - fromY), lastMove, 1, isBlack);
+                winPositions = addWinPositions(piece, to, winPositions, 1, isBlack);
+            }
+        }
+    }
+
+    return bestMoves;
+}
+
+/**
+ * $Fix
+ * I do NOT know why it has to funcs getBestMove.
+ */
+function getBestMove(game: J.IGame): J.IMove {
+    let pieces = J.Game.getTurnPieces(game);
+    const isBlack = pieces[0].isBlack;
+    pieces = J.Board.getPiecesWhereCanIGo(isBlack, game.board, J.Game.getTurnPieces(game));
+
+    let bestMoves = [];
+    let winPositions = [];
+
+    getNMovesToWin(pieces, isBlack);
+
+    const orderedPieces = J.Position.getOrderedPositions(pieces, isBlack);
+
+    for (let l = 0; l < orderedPieces.length; l++) {
+        if (orderedPieces[l]) {
+            const pieces = orderedPieces[l];
+            for (let m = 0; m < pieces.length; m++) {
+                const piece = pieces[m];
+
+                addWinPositions(piece, null, winPositions, -1, isBlack);
+                const fromY = J.Position.getY0Start(piece.y, isBlack);
+
+                const tos = piece.whereCanIGo.orderedPositions[piece.whereCanIGo.orderedPositions.length - 1];
+                if (tos)
+                    for (let i = 0; i < tos.length; i++) {
+                        const to = tos[i];
+                        if (to) {
+                            const toY = J.Position.getY0Start(to.y, isBlack);
+
+                            bestMoves = addBestMove(bestMoves, (toY - fromY), piece, to, 0, isBlack);
+                            bestMoves = addBestMovesAfterMove(piece, fromY, piece, to, game, isBlack, bestMoves, winPositions);
+
+                            winPositions = addWinPositions(piece, to, winPositions, 0, isBlack);
+                        }
+                    }
+
+                if (piece.whereCanIGo.orderedPositions.length < 8) {
+                    const otherPieces = J.Position.getOtherPieces(pieces, piece);
+                    for (let n = 0; n < otherPieces.length; n++) {
+                        const otherPiece = otherPieces[n];
+                        for (let o = 0; o < otherPiece.whereCanIGo.length; o++) {
+                            const otherPieceMove = otherPiece.whereCanIGo[o];
+                            bestMoves = addBestMovesAfterMove(piece, fromY, otherPiece, otherPieceMove, game, isBlack, bestMoves, winPositions);
+
+                            winPositions = addWinPositions(otherPiece, otherPieceMove, winPositions, 0, isBlack);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const bestLevel = getBestLevel(bestMoves);
+    const higherBestMoves = bestMoves[bestLevel][bestMoves[bestLevel].length - 1];
+
+    const move = getMoveNearWinPosition(pieces, higherBestMoves,
+        orderedPieces, winPositions, isBlack, game);
+    return move;
+}
+
+function getComputerMove(game: J.IGame): J.IMove {
+    if (game.score.ended)
+        return null;
+
+    return getBestMove(game);
+}
+
+export {
+    addBestMove,
+    getBestLevel,
+    getWinPosition,
+    getDistance,
+    getNMovesToWin,
+    isGameEnding,
+    getLastMoveToWin,
+    getPiecesFurtherAway,
+    getBestMove,
+    getMoveNearWinPosition,
+    addWinPositions,
+    addBestMovesAfterMove,
+    getComputerMove,
+};

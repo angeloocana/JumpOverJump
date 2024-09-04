@@ -1,0 +1,9 @@
+{
+  "generator-ptz": {
+    "promptValues": {
+      "appname": "joj-ai",
+      "githubAuthor": "angeloocana",
+      "codecovToken": "446534b0-9064-4a10-b14b-75bb25bade25"
+    }
+  }
+}

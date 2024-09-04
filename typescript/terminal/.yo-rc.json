@@ -1,0 +1,9 @@
+{
+  "generator-ptz": {
+    "promptValues": {
+      "appname": "joj-terminal",
+      "githubAuthor": "angeloocana",
+      "codecovToken": "f4ec6039-ba1a-41a9-b2e1-bdd9cf2ecd4a"
+    }
+  }
+}

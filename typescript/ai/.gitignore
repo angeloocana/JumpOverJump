@@ -1,6 +1,3 @@
-.DS_Store
-dist
-dist-esnext
 # Logs
 logs
 *.log
