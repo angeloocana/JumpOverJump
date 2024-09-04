@@ -1,0 +1,22 @@
+﻿<div class="list card no-margin" ng-class="{'joj-black-player': isBlack }">
+    <div class="item item-avatar item-icon-right" ng-class="{'joj-black-player': isBlack }">
+        <img ng-src="{{player.foto}}" alt="{{player.name}}" />
+        <h2 ng-class="{'joj-black-player': isBlack }">{{player.name}} </h2>
+        <p ng-class="{'joj-black-player': isBlack }">{{player.color | translate}}</p>
+        <i ng-class="{'joj-black-player': isBlack }" class="icon {{player.icon}}"></i>
+    </div>
+    <div class="item  item-body" ng-class="{'joj-black-player': isBlack }">
+        <ul class="list">
+            <li class="item item-toggle item-icon-left" ng-class="{'joj-black-player': isBlack }">
+                <i ng-class="{'joj-black-player': isBlack }" class="icon {{player.helpOn ? 'ion-eye' : 'ion-eye-disabled'}}"></i>
+                {{"SHOW_MOVES" | translate}}
+                <label class="toggle toggle-balanced" ng-class="{'joj-black-player': isBlack }">
+                    <input ng-model="player.helpOn" type="checkbox" ng-disabled="player.isComputer">
+                    <div class="track">
+                        <div class="handle"></div>
+                    </div>
+                </label>
+            </li>
+        </ul>        
+    </div>
+</div>

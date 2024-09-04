@@ -1,0 +1,108 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "joj", "joj\", "{5482CBAD-4EC8-4043-9235-8662222C46F3}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_8661"
+		Debug.AspNetCompiler.PhysicalPath = "joj\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_8661\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_8661"
+		Release.AspNetCompiler.PhysicalPath = "joj\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_8661\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "8661"
+		SlnRelativePath = "joj\"
+	EndProjectSection
+EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "www", "http://localhost:2047", "{30E2F781-7858-4A7D-A603-BDAF85E7DE5B}"
+	ProjectSection(WebsiteProperties) = preProject
+		UseIISExpress = "true"
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_2047"
+		Debug.AspNetCompiler.PhysicalPath = "jojApp\www\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_2047\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_2047"
+		Release.AspNetCompiler.PhysicalPath = "jojApp\www\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_2047\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		SlnRelativePath = "jojApp\www\"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpOverJump.StaticContent", "JumpOverJump.StaticContent\JumpOverJump.StaticContent.csproj", "{CC234E12-A864-4167-9901-CB41E827A01B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpOverJump.Web", "JumpOverJump.Web\JumpOverJump.Web.csproj", "{A54D0BD5-2414-4C43-8CCD-58928214EFD9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mobile", "mobile", "{0B2EB541-2EF5-4DD7-9AA9-4ED91BBC9A2C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FEF9862E-6122-42AB-9AF4-5768BC5B9138}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "web", "web", "{BF6560C1-A87F-408B-9145-64839C905EB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Jobs", "Jobs", "{CC29F7BA-A007-44F7-9DFD-A3A56B3A4EB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{BFEB8E4F-71D8-4681-946F-9B82A1CEAD5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpOverJump.Core", "JumpOverJump.Core\JumpOverJump.Core.csproj", "{30BF623A-6531-41CB-BA7E-6D63FB667354}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpOverJump.MovesToWin", "JumpOverJump.MovesToWin\JumpOverJump.MovesToWin.csproj", "{32CA3EF0-8C75-4035-A186-5B37A6EA0660}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5482CBAD-4EC8-4043-9235-8662222C46F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5482CBAD-4EC8-4043-9235-8662222C46F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5482CBAD-4EC8-4043-9235-8662222C46F3}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{5482CBAD-4EC8-4043-9235-8662222C46F3}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{30E2F781-7858-4A7D-A603-BDAF85E7DE5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30E2F781-7858-4A7D-A603-BDAF85E7DE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30E2F781-7858-4A7D-A603-BDAF85E7DE5B}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{30E2F781-7858-4A7D-A603-BDAF85E7DE5B}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{CC234E12-A864-4167-9901-CB41E827A01B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC234E12-A864-4167-9901-CB41E827A01B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC234E12-A864-4167-9901-CB41E827A01B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC234E12-A864-4167-9901-CB41E827A01B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A54D0BD5-2414-4C43-8CCD-58928214EFD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A54D0BD5-2414-4C43-8CCD-58928214EFD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A54D0BD5-2414-4C43-8CCD-58928214EFD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A54D0BD5-2414-4C43-8CCD-58928214EFD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30BF623A-6531-41CB-BA7E-6D63FB667354}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30BF623A-6531-41CB-BA7E-6D63FB667354}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30BF623A-6531-41CB-BA7E-6D63FB667354}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30BF623A-6531-41CB-BA7E-6D63FB667354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32CA3EF0-8C75-4035-A186-5B37A6EA0660}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32CA3EF0-8C75-4035-A186-5B37A6EA0660}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32CA3EF0-8C75-4035-A186-5B37A6EA0660}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32CA3EF0-8C75-4035-A186-5B37A6EA0660}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5482CBAD-4EC8-4043-9235-8662222C46F3} = {FEF9862E-6122-42AB-9AF4-5768BC5B9138}
+		{30E2F781-7858-4A7D-A603-BDAF85E7DE5B} = {0B2EB541-2EF5-4DD7-9AA9-4ED91BBC9A2C}
+		{CC234E12-A864-4167-9901-CB41E827A01B} = {BF6560C1-A87F-408B-9145-64839C905EB5}
+		{A54D0BD5-2414-4C43-8CCD-58928214EFD9} = {BF6560C1-A87F-408B-9145-64839C905EB5}
+		{30BF623A-6531-41CB-BA7E-6D63FB667354} = {BFEB8E4F-71D8-4681-946F-9B82A1CEAD5B}
+		{32CA3EF0-8C75-4035-A186-5B37A6EA0660} = {CC29F7BA-A007-44F7-9DFD-A3A56B3A4EB5}
+	EndGlobalSection
+EndGlobal

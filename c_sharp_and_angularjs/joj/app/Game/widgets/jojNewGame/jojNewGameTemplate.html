@@ -1,0 +1,18 @@
+﻿<ion-view view-title="{{'NEW_GAME' | translate}}">
+    <ion-content class="app-background-color">
+        <div class="row">
+            <div class="col {{btnsContaneirClass}}">
+                <a class="button icon-left button-block button-balanced button-large ion-ios-game-controller-b" ui-sref="game.offline">
+                    {{ "NEW_GAME_OFFLINE" | translate }}
+                </a>
+                <a class="button icon-left button-block button-balanced button-large ion-android-desktop" ui-sref="game.computer">
+                    {{ "NEW_GAME_VS_COMPUTER" | translate }}
+                </a>
+                <!--<a class="button icon-left button-block button-balanced button-large ion-android-contacts" ui-sref="game.online">
+                    {{ "NEW_GAME_ONLINE" | translate }}
+                </a>-->
+            </div>
+        </div>
+        <ptz-footer></ptz-footer>
+    </ion-content>
+</ion-view>

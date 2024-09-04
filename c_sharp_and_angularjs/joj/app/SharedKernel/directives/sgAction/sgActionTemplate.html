@@ -1,0 +1,6 @@
+﻿<button type="submit" class="blue-sg waves-effect waves-light" ng-disabled="actionForm.$invalid"
+        ng-click="startAction()" ng-hide="isLoading">
+    {{actionLabel | translate}}
+</button>
+<sg-errors errors="errors"></sg-errors>
+<sg-loader is-loading="isLoading"></sg-loader>

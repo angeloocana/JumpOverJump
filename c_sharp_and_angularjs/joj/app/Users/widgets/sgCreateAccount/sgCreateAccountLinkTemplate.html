@@ -1,0 +1,5 @@
+﻿<ng-switch on="showNotRegistred">
+    <span ng-switch-when="true">{{ "NOT_REGISTERED" | translate}}</span>
+    <a ng-switch-when="true" class="btn waves-effect white-sg" ng-class="getValidateConfirmPasswordClass()" ng-href="/signIn?returnUrl={{getReturnUrl()}}" translate="CREATE_ACCOUNT"></a>
+    <a ng-switch-default class="blue-text" ng-class="getValidateConfirmPasswordClass()" ng-href="/signIn?returnUrl={{getReturnUrl()}}" translate="CREATE_ACCOUNT"></a>
+</ng-switch>

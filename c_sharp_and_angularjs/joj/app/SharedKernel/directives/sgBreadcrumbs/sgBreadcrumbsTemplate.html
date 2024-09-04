@@ -1,0 +1,9 @@
+﻿<div class="col s12">
+    <ol class="breadcrumb">
+        <li ng-repeat="page in pages" ng-class="{'active': page.active}">
+            <h5 ng-if="!(page.link) && !(page.active)" class="breadcrumbs-title blue-text">{{ page.label | translate}}</h5>
+            <a ng-if="page.link && !(page.active)" ng-href="{{page.link}}">{{ page.label | translate}}</a>
+            {{ page.active ? (page.label | translate) : ''}}
+        </li>
+    </ol>
+</div>

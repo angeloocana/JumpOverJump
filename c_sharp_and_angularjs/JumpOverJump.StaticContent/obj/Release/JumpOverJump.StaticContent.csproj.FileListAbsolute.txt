@@ -1,0 +1,12 @@
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.dll.config
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.dll
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.pdb
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.csprojResolveAssemblyReference.cache
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.dll
+C:\MyProjects\StaffGeist\StaffGeist\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.pdb
+A:\joj\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.dll.config
+A:\joj\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.dll
+A:\joj\JumpOverJump.StaticContent\bin\JumpOverJump.StaticContent.pdb
+A:\joj\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.csprojResolveAssemblyReference.cache
+A:\joj\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.dll
+A:\joj\JumpOverJump.StaticContent\obj\Release\JumpOverJump.StaticContent.pdb

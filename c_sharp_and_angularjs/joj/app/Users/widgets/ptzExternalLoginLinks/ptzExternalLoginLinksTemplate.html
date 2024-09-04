@@ -1,0 +1,18 @@
+﻿<div class="row">
+    <div class="col {{'SIGN_IN' | translate}}">
+        <p>
+            {{"SIGN_IN_USE_SOCIAL_NETWORKS" | translate}}
+        </p>
+        <div>
+            <a target="_self" ng-href="login/ExternalLogin?provider=Facebook&returnUrl={{returnUrl}}">
+                <i class="icon ion-social-facebook"></i>
+            </a>
+
+            <a target="_self" ng-href="login/ExternalLogin?provider=Google&returnUrl={{returnUrl}}">
+                <i class="icon ion-social-googleplus"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+

@@ -1,0 +1,4 @@
+A:\joj\JumpOverJump.Core\bin\Debug\JumpOverJump.Core.dll
+A:\joj\JumpOverJump.Core\bin\Debug\JumpOverJump.Core.pdb
+A:\joj\JumpOverJump.Core\obj\Debug\JumpOverJump.Core.dll
+A:\joj\JumpOverJump.Core\obj\Debug\JumpOverJump.Core.pdb

@@ -1,0 +1,12 @@
+﻿ <div class="input-field-select col s12 m6">
+    <label translate="YEAR"></label>
+    <select class="browser-default validate" ng-required="required" ng-model="monthYear.year" ng-change="yearChanged()" ng-options="year as year for year in years">
+        <option value="" translate="SELECT"></option>
+    </select>
+</div>
+<div class="input-field-select col s12 m6">
+    <label translate="MONTH"></label>
+    <select class="browser-default validate" ng-required="required" ng-model="monthYear.month" convert-to-number ng-options="month as (month | month | translate) for month in months">
+        <option value="" translate="SELECT"></option>
+    </select>
+</div>

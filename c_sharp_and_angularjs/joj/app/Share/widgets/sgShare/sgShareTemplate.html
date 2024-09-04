@@ -1,0 +1,27 @@
+﻿<div class="col s12 valign-wrapper {{aligment}}">
+    <span class="{{aligment}} valign text-white">{{"SHARE" | translate}}:</span>
+    <a class="btn-sm-shared facebook {{aligment}}" title="Facebook" data-shares='shares' facebook data-url='{{link}}'><i class="ico-facebook"></i></a>
+    <a class="btn-sm-shared linkedin {{aligment}}" title="linkedin" linkedin data-url='{{link}}'></a>
+    <a class="btn-sm-shared gplus {{aligment}}" title="Google+" ng-href='https://plus.google.com/share?url={{link}}' onclick="javascript:window.open(this.href,
+  '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+        <i class="ico-gplus"></i>
+    </a>
+    <a class="btn-sm-shared email {{aligment}}" ng-show="postSendEmail" ng-click="openEmail()" title="E-mail"><i class="material-icons">email</i></a>
+</div>
+<div ng-show="emailOpened">
+    <form id="emailToForm" name="emailToForm">
+        <div class="col s12 blue-text {{aligment}}">
+            <h5>{{emailTitle | translate}}</h5>
+        </div>
+        <div class="input-field col s12">
+            <input id="share-email" type="text" class="validate" minlength="5" maxlength="500" ng-model="emailTo.emails">
+            <label for="share-email" translate="EMAILS_TO"></label>
+        </div>
+        <div class="col s12 {{aligment}}">
+            <sg-errors></sg-errors>
+            <sg-loader is-loading="sendingEmail"></sg-loader>
+            <button type="submit" class="blue-sg waves-effect waves-light click {{aligment}} no-margin-top"
+                    ng-click="sendEmail()" translate="SHARE" ng-hide="sendingEmail"></button>
+        </div>
+    </form>
+</div>

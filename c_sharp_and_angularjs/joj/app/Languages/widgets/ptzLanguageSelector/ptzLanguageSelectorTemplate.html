@@ -1,0 +1,11 @@
+﻿<div class="row">
+    <div class="col {{languagesColClass}}">
+        <ion-list>
+            <ion-radio ng-model="langKey" ng-click="$parent.changeLangKey(language.key)"  ng-value="language.key" ng-repeat="language in languages">
+                <i class="country-flag {{language.icon}}"></i>
+                {{language.name}}
+            </ion-radio>
+        </ion-list>
+    </div>
+</div>
+

@@ -1,0 +1,14 @@
+[
+  {
+    "outputFileName": "index.html",
+    "inputFiles": [
+      "index.html"
+    ]
+  },
+  {
+    "outputFileName": "app/Game/widgets/jojBoard/jojBoardTemplate.html",
+    "inputFiles": [
+      "app/Game/widgets/jojBoard/jojBoardTemplate.html"
+    ]
+  }
+]

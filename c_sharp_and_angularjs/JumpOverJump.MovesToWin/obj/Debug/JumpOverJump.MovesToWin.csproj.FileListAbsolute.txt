@@ -1,0 +1,8 @@
+A:\joj\JumpOverJump.MovesToWin\bin\Debug\JumpOverJump.MovesToWin.exe.config
+A:\joj\JumpOverJump.MovesToWin\bin\Debug\JumpOverJump.MovesToWin.exe
+A:\joj\JumpOverJump.MovesToWin\bin\Debug\JumpOverJump.MovesToWin.pdb
+A:\joj\JumpOverJump.MovesToWin\bin\Debug\JumpOverJump.Core.dll
+A:\joj\JumpOverJump.MovesToWin\bin\Debug\JumpOverJump.Core.pdb
+A:\joj\JumpOverJump.MovesToWin\obj\Debug\JumpOverJump.MovesToWin.csprojResolveAssemblyReference.cache
+A:\joj\JumpOverJump.MovesToWin\obj\Debug\JumpOverJump.MovesToWin.exe
+A:\joj\JumpOverJump.MovesToWin\obj\Debug\JumpOverJump.MovesToWin.pdb

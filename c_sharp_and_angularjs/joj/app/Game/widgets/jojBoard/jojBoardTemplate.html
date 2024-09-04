@@ -1,0 +1,39 @@
+﻿<div class="joj-game">
+    <div class="joj-board" style="width: {{boardSize}}px; height: {{boardSize}}px;">
+        <div ng-repeat="row in game.board track by $index" class="joj-board-row">
+            <div ng-repeat="col in row track by $index" class="joj-board-col {{col.backgroundBlack ? 'joj-board-black':'joj-board-white'}}"
+                 ng-class="{'joj-position-i-can-go-here': (helpOn && col.iCanGoHere),
+                 'joj-position-white-home': col.whiteHome,
+                 'joj-position-black-home': col.blackHome,
+                 'joj-position-winning': col.winning,
+                 'joj-position-current': (col.x == currentPiece.x && col.y == currentPiece.y),
+                 'joj-position-last-move': col.lastMove,
+                 'joj-position-last-move-jump': col.lastMoveJump,
+                 }" ng-click="move(col)">
+                <div class="{{getPieceClass(col.piece)}}" ng-click="whereCanIGo(col)"></div>
+            </div>
+        </div>
+    </div>
+    <div class="joj-menu" style="{{'width:'+menuWidth +'px; height:'+menuHeigth}}">
+        <div class="row  responsive-sm">
+            <div class="col joj-col">
+                <a class="button button-block  icon-left button-balanced button-large ion-ios-game-controller-b joj-col-btn" ui-sref="game.new">
+                    {{ "NEW_GAME" | translate }}
+                </a>
+            </div>
+            <div class="col joj-col">
+                <a class="button button-block icon-left button-assertive button-large ion-skip-backward joj-col-btn" ng-click="backMove()">
+                    {{ "BACK_MOVE" | translate }}
+                </a>
+            </div>
+        </div>
+        <div class="row  responsive-sm">
+            <div class="col  joj-col">
+                <joj-player player="game.players.white" run-on-help-on-changed="helpOnChanged"></joj-player>
+            </div>
+            <div class="col  joj-col">
+                <joj-player player="game.players.black" is-black="true" run-on-help-on-changed="helpOnChanged"></joj-player>
+            </div>
+        </div>
+    </div>
+</div>

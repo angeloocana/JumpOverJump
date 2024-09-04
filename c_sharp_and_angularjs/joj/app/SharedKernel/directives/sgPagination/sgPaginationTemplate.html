@@ -1,0 +1,15 @@
+﻿<div class="col s12 m1 valign-wrapper">
+    <div class="col s12 valign">
+        <div class="valign-wrapper">
+            <a ng-show="hasPreviousPage()" ng-click="goPreviousPage()" class="valign">
+                <i class="material-icons">chevron_left</i>
+            </a>
+            <b class="valign">{{page}}</b>
+            <a>&nbsp;/&nbsp;</a>
+            <a ng-click="goLastPage()" class="valign">{{totalPages}}</a>
+            <a ng-click="goNextPage()" ng-show="hasNextPage()" class="valign">
+                <i class="material-icons valign">chevron_right</i>
+            </a>
+        </div>
+    </div>
+</div>
