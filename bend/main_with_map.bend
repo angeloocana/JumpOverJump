@@ -1,7 +1,6 @@
 empty = 0
 white = 1
 black = 2
-not_found = -1
 board_size = 8
 
 # TODO: Why can't I just do this?
@@ -34,35 +33,24 @@ def get_initial_position_value(position):
   else:
     return empty
 
-def get_position_value(board, position):
-  i = 0
-  fold board with i:
-    case List/Cons:
-      if i == position:
-        return board.head
-      else:
-        return board.tail(i)
-    case List/Nil:
-      return not_found
-
 def get_initial_board():
-  bend position = 0:
+  bend position = 0, board = {}:
     when position <= last_position_index:
-      value = get_initial_position_value(position)
-      board = List/Cons(value, fork(position + 1))
+      board[position] = get_initial_position_value(position)
+      return fork(position + 1, board)
     else:
-      board = List/Nil
-  return board
+      return board
 
 def get_pieces(board, turn):
-  fold board with i = 0, pieces = []:
-    case List/Cons:
-      if board.head == turn:
-        return board.tail(i + 1, List/Cons(i, pieces)) 
+  bend position = 0, board:
+    when position <= last_position_index:
+      if (board[position] == turn):
+        pieces = List/Cons(position, fork(position + 1, board)) 
       else:
-        return board.tail(i + 1, pieces) 
-    case List/Nil:
-      return pieces
+        pieces = fork(position + 1, board)
+    else:
+      pieces = List/Nil
+  return pieces
 
 def valid_position(position):
   if position < 0:
@@ -114,32 +102,26 @@ def get_nearby_positions(position):
   return [p for p in positions if valid_position(p)]
 
 def empty_position(board, position):
-  if get_position_value(board, position) == empty:
+  if board[position] == empty:
     return 1
   else:
     return 0
 
-def get_possible_moves_for_position(position, board):
-  # fold board with possible_moves = []
-  #   (board, ) = board
-  #   if 
-  return []
-  # nearby_positions = get_nearby_positions(piece)
-  # return nearby_positions
-  # return [p for p in nearby_positions if empty_position(board, p)]
+def get_possible_moves_for_piece(board, piece):
+  nearby_positions = get_nearby_positions(piece)
+  return [p for p in nearby_positions if empty_position(board, p)]
 
 def get_possible_moves(board, turn):
-  board_first_position = board
-  fold board with board_with_possible_moves = []:
+  pieces = get_pieces(board, turn)
+  pieces_and_possible_moves = List/Nil
+
+  fold pieces with pieces_and_possible_moves:
     case List/Cons:
-      if board.head == turn:
-        # possible_moves = get_possible_moves_for_position(board_with_possible_moves)
-        possible_moves = []
-        return board.tail(List/Cons((board.head, possible_moves), board_with_possible_moves))
-      else:
-        return board.tail(List/Cons((board.head, []), board_with_possible_moves))
+      piece = pieces.head
+      possible_moves = get_possible_moves_for_piece(board, piece)
+      return pieces.tail(List/Cons((piece, possible_moves), pieces_and_possible_moves))
     case List/Nil:
-      return board_with_possible_moves
+      return pieces_and_possible_moves
 
 def main():
   board = get_initial_board()
