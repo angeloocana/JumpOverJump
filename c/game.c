@@ -2,8 +2,8 @@
 
 int BOARD_SIZE = 8;
 int LAST_ROW_INDEX = 8 - 1;
-char WHITE = '0';
-char BLACK = '1';
+char WHITE = 'O';
+char BLACK = 'X';
 char EMPTY = '_';
 
 void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
@@ -21,11 +21,23 @@ void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
 }
 
 void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
+
+    printf("  ");
+
     for(int x = 0; x < BOARD_SIZE; ++x)
     {
+        printf(" %d", x);
+    }
+
+    printf("\n");
+
+    for(int x = 0; x < BOARD_SIZE; ++x)
+    {
+        printf(" %d", x);
+
         for(int y = 0; y < BOARD_SIZE; ++y)
         {
-            printf("%c", board[x][y]);
+            printf(" %c", board[x][y]);
         }
 
         printf("\n");
