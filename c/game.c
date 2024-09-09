@@ -64,6 +64,58 @@ void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
     printf("\n");
 }
 
+void addPositionToPossibleMoves(char x, char y, char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    char i = 2; // skip origin position x,y
+
+    while (possibleMovesForPosition[i] != EMPTY) {
+        i += 2;
+    }
+
+    possibleMovesForPosition[i] = x;
+    possibleMovesForPosition[i + 1] = y;
+}
+
+void addPositionToPossibleMovesIfValid(char x, char y, char board[BOARD_SIZE][BOARD_SIZE], char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
+        return; // Position doesn't exist
+    } else if (board[x][y] != EMPTY) {
+        return; // Position not empty
+    }
+
+    addPositionToPossibleMoves(x, y, possibleMovesForPosition);
+}
+
+// Example:
+// possibleMovesForPosition = [0, 0, 0, 1, 1, 1] 
+// (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
+void getPossibleMovesForPosition(char board[BOARD_SIZE][BOARD_SIZE], char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    char x = possibleMovesForPosition[0];
+    char y = possibleMovesForPosition[1];
+
+    addPositionToPossibleMovesIfValid(x - 1, y - 1, board, possibleMovesForPosition); // Top left
+    addPositionToPossibleMovesIfValid(x, y - 1, board, possibleMovesForPosition); // Top
+    addPositionToPossibleMovesIfValid(x + 1, y - 1, board, possibleMovesForPosition); // Top right
+
+    addPositionToPossibleMovesIfValid(x - 1, y, board, possibleMovesForPosition); // Left
+    addPositionToPossibleMovesIfValid(x + 1, y, board, possibleMovesForPosition); // Right
+
+    addPositionToPossibleMovesIfValid(x - 1, y + 1, board, possibleMovesForPosition); // Bottom left
+    addPositionToPossibleMovesIfValid(x, y + 1, board, possibleMovesForPosition); // Bottom
+    addPositionToPossibleMovesIfValid(x + 1, y + 1, board, possibleMovesForPosition); // Bottom right
+}
+
+void initializePossibleMovesForPosition(char x, char y, char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    possibleMovesForPosition[0] = x;
+    possibleMovesForPosition[1] = y;
+
+    // Set remaining array positions to EMPTY to avoid unexpected old memory values
+    for(char i = 2; i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH; i++) {
+        possibleMovesForPosition[i] = EMPTY;
+    }
+    // or use memset if #include <string.h> included because of other reasons
+    // memset(possibleMoves[pieceCount] + 2, EMPTY, MAX_POSSIBLE_MOVES_ARRAY_LENGTH - 2);
+}
+
 // Example:
 // possibleMoves = [
 //  [0, 0, 0, 1, 1, 1], (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
@@ -76,12 +128,30 @@ void getPossibleMovesForColor(char board[BOARD_SIZE][BOARD_SIZE], char color, ch
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
             if (board[x][y] == color) {
-                possibleMoves[pieceCount][0] = x;
-                possibleMoves[pieceCount][1] = y;
+                initializePossibleMovesForPosition(x, y, possibleMoves[pieceCount]);
+                getPossibleMovesForPosition(board, possibleMoves[pieceCount]);
                 pieceCount++;
             }
         }
     }
+}
+
+void printPossibleMovesForPiece(char possibleMoves[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    char x = possibleMoves[0];
+    char y = possibleMoves[1];
+    char testX = 2;
+    char testY = 2;
+    printf("(x%d,y%d) =>", x, y);
+
+    char i = 2; // Skip index for origin possition
+    while(i <= MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
+        char toX = possibleMoves[i];
+        char toY = possibleMoves[i + 1];
+        printf(" (x%d,y%d)", toX, toY);
+        i += 2;
+    }
+
+    printf("\n");
 }
 
 void printPossibleMoves(char possibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
@@ -89,11 +159,7 @@ void printPossibleMoves(char possibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_
 
     for(char i = 0; i < BOARD_SIZE; ++i)
     {
-        char x = possibleMoves[i][0];
-        char y = possibleMoves[i][1];
-        printf("(x%d,y%d) => ", x, y);
-        
-        printf("\n");
+        printPossibleMovesForPiece(possibleMoves[i]);
     }
 }
 
