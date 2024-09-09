@@ -34,7 +34,7 @@ void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
 }
 
 void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
-    printf("  ");
+    printf("\n  ");
 
     for(char x = 0; x < BOARD_SIZE; ++x)
     {
@@ -163,14 +163,81 @@ void printPossibleMoves(char possibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_
     }
 }
 
+void helpWithPossibleMoves(char board[BOARD_SIZE][BOARD_SIZE], char color) {
+    char possibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
+    getPossibleMovesForColor(board, color, possibleMoves);
+    printPossibleMoves(possibleMoves);
+}
+
+char askForMoveI(char i) {
+    char answer = -1;
+
+    while(answer == -1) {
+        printf("\nEnter %c: ", i);
+        answer = getchar();
+        getchar(); // Removes new line
+        answer = answer - 48; // Converts char number to char index
+
+        if (answer < 0 || answer >= BOARD_SIZE) {
+            answer = -1;
+            printf("\nInvalid index. Please try again.\n");
+        }
+    }
+
+    return answer;
+}
+
+void askForMove(char board[BOARD_SIZE][BOARD_SIZE], char color) {
+    char x = askForMoveI('x'); 
+    char y = askForMoveI('y');
+
+    printf("\nWill move to x:%d,y:%d another day when I get back to this.\n", x, y);
+}
+
 int main() {
+    printf("Welcome to Jump Over Jump!\n\n");
+
+    char turn = WHITE;
     char board[BOARD_SIZE][BOARD_SIZE];
     initializeBoard(board);
     printBoard(board);
 
-    char possibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
-    getPossibleMovesForColor(board, WHITE, possibleMoves);
-    printPossibleMoves(possibleMoves);
+    char exitGame = 0;
+
+    while(exitGame == 0) {
+        printf("\nWhat would you like to do? Enter:\n");
+        printf("'m' move\n");
+        printf("'h' help with possible moves\n");
+        printf("'b' board\n");
+        printf("'e' exit\n");
+
+        char answer = getchar();
+        getchar(); // Removes new line
+        
+        switch (answer)
+        {
+            case 'b':
+                printBoard(board);
+                break;
+
+            case 'h':
+                helpWithPossibleMoves(board, turn);
+                break;
+
+            case 'm':
+                askForMove(board, turn);
+                break;
+            
+            case 'e':
+                printf("Goodbye!\n");
+                exitGame = 1;
+                break;
+            
+            default:
+                printf("Invalid option. Please try again!\n");
+                break;
+        }
+    }
 
     return 0;
 }
