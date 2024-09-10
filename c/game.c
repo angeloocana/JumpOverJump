@@ -48,11 +48,17 @@ void addPositionToPossibleMoves(char x, char y, char possibleMovesForPosition[MA
     possibleMovesForPosition[i + 1] = y;
 }
 
-void addPositionToPossibleMovesIfValid(char x, char y, char board[BOARD_SIZE][BOARD_SIZE], char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+int isValidPosition(char x, char y) {
     if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
-        return; // Position doesn't exist
-    } else if (board[x][y] != EMPTY) {
-        return; // Position not empty
+        return 0; // Position doesn't exist
+    } 
+    
+    return 1;
+}
+
+void addPositionToPossibleMovesIfValid(char x, char y, char board[BOARD_SIZE][BOARD_SIZE], char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
+    if (!isValidPosition(x, y) || board[x][y] != EMPTY) {
+        return;
     }
 
     addPositionToPossibleMoves(x, y, possibleMovesForPosition);
@@ -109,6 +115,23 @@ void getPossibleMovesForColor(char board[BOARD_SIZE][BOARD_SIZE], char color, ch
     }
 }
 
+int isValidMove(char fromX, char fromY, char toX, char toY, char color, char board[BOARD_SIZE][BOARD_SIZE]) {
+    if(!isValidPosition(fromX, fromY) || !isValidPosition(toX, toY)) {
+        return 0;
+    }
+    
+    if(board[fromX][fromY] != color || board[toX][toY] != EMPTY) {
+        return 0;
+    }
+    
+    // TODO: Check if move is valid
+    return 1;
+}
+
+void move(char fromX, char fromY, char toX, char toY, char board[BOARD_SIZE][BOARD_SIZE]) {
+    board[toX][toY] = board[fromX][fromY];
+    board[fromX][fromY] = EMPTY;
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 // Terminal
@@ -178,11 +201,11 @@ void helpWithPossibleMoves(char board[BOARD_SIZE][BOARD_SIZE], char color) {
     printPossibleMoves(possibleMoves);
 }
 
-char askForMoveI(char i) {
+char askForMoveI(char i[]) {
     char answer = -1;
 
     while(answer == -1) {
-        printf("\nEnter %c: ", i);
+        printf("\nEnter %s: ", i);
         answer = getchar();
         getchar(); // Removes new line
         answer = answer - 48; // Converts char number to char index
@@ -197,10 +220,17 @@ char askForMoveI(char i) {
 }
 
 void askForMove(char board[BOARD_SIZE][BOARD_SIZE], char color) {
-    char x = askForMoveI('x'); 
-    char y = askForMoveI('y');
+    char fromX = askForMoveI("from x"); 
+    char fromY = askForMoveI("from y");
 
-    printf("\nWill move to x:%d,y:%d another day when I get back to this.\n", x, y);
+    char toX = askForMoveI("to x"); 
+    char toY = askForMoveI("to y");
+
+    if (isValidMove(fromX, fromY, toX, toY, color, board)) {
+        move(fromX, fromY, toX, toY, board);
+    } else {
+        printf("\n invalid move from %dx,%dy to %dx,%dy", fromX, fromY, toX, toY);
+    }
 }
 
 int main() {
