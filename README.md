@@ -12,5 +12,7 @@ This repo contains implementations of the game in many languages for learning pu
     - `/core` Rewrite of the core logic using Typescript and functional programming (FP). The first game was built with angular.js + js using mostly Object-oriented programming (OOP).
     - `/ai` Basic and dumb ai to play with
     - `/terminal` Terminal interface to play the game
- - `bend` (2024)
+ - `./bend` (2024)
     - Currently trying to learn [bend](https://github.com/HigherOrderCO/Bend) a massively parallel, high-level programming language.
+ - `./c` (2024)
+    - Currently trying to learn C to build the smallest and fastest game engine.
