@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+/////////////////////////////////////////////////////////////////////////////////
+// Core
+/////////////////////////////////////////////////////////////////////////////////
+
 char BOARD_SIZE = 8;
 char LAST_ROW_INDEX = 8 - 1;
 char WHITE = 'O';
@@ -31,37 +35,6 @@ void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
             }
         }
     }
-}
-
-void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
-    printf("\n  ");
-
-    for(char x = 0; x < BOARD_SIZE; ++x)
-    {
-        printf(" x%d", x);
-    }
-
-    printf("\n");
-
-    for(char x = 0; x < BOARD_SIZE; ++x)
-    {
-        printf(" y%d", x);
-
-        for(char y = 0; y < BOARD_SIZE; ++y)
-        {
-            printf(" %c ", board[x][y]);
-        }
-
-        printf("y%d \n", x);
-    }
-
-    printf("  ");
-
-    for(char x = 0; x < BOARD_SIZE; ++x)
-    {
-        printf(" x%d", x);
-    }
-    printf("\n");
 }
 
 void addPositionToPossibleMoves(char x, char y, char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
@@ -134,6 +107,42 @@ void getPossibleMovesForColor(char board[BOARD_SIZE][BOARD_SIZE], char color, ch
             }
         }
     }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+// Terminal
+/////////////////////////////////////////////////////////////////////////////////
+
+void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
+    printf("\n  ");
+
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        printf(" x%d", x);
+    }
+
+    printf("\n");
+
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        printf(" y%d", x);
+
+        for(char y = 0; y < BOARD_SIZE; ++y)
+        {
+            printf(" %c ", board[x][y]);
+        }
+
+        printf("y%d \n", x);
+    }
+
+    printf("  ");
+
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        printf(" x%d", x);
+    }
+    printf("\n");
 }
 
 void printPossibleMovesForPiece(char possibleMoves[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
