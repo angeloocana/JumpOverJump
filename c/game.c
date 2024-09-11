@@ -4,11 +4,11 @@
 // Core
 /////////////////////////////////////////////////////////////////////////////////
 
-char BOARD_SIZE = 8;
-char LAST_ROW_INDEX = 8 - 1;
-char WHITE = 'O';
-char BLACK = 'X';
-char EMPTY = '_';
+const char BOARD_SIZE = 8;
+const char LAST_ROW_INDEX = BOARD_SIZE - 1;
+const char WHITE = 'O';
+const char BLACK = 'X';
+const char EMPTY = '_';
 
 // Max possible moves
 // Positions:
@@ -17,47 +17,62 @@ char EMPTY = '_';
 // 32-1 = 31   Piece can't move to current position
 // TODO: Confirm right number. I'm guessing the max is 16 moves, 
 // with some quick tests the maximum I got were 15 moves.
-char MAX_POSSIBLE_MOVES = 16;
+const char MAX_POSSIBLE_MOVES = 16;
 
-// currentPosition + (MAX_POSSIBLE_MOVES * position)
-// 2 + (16 * 2)
-char MAX_POSSIBLE_MOVES_ARRAY_LENGTH = 34;
+const char POSITION_LENGHT = 2;
+const char MAX_POSSIBLE_MOVES_ARRAY_LENGTH = POSITION_LENGHT + (MAX_POSSIBLE_MOVES * POSITION_LENGHT);
+
+void setPosition(char x, char y, char value, char board[BOARD_SIZE][BOARD_SIZE]) {
+    board[x][y] = value;
+}
+
+char getPosition(char x, char y, char board[BOARD_SIZE][BOARD_SIZE]) {
+    return board[x][y];
+}
+
+char getInitialPositionValue(char y) {
+    switch (y)
+    {
+        case 0:
+            return WHITE;
+        case LAST_ROW_INDEX:
+            return BLACK;
+        default:
+            return EMPTY;
+    }
+}
 
 void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
     for(char x = 0; x < BOARD_SIZE; ++x)
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
-            if (x == 0) {
-                board[x][y] = WHITE;
-            } else {
-                board[x][y] = x == LAST_ROW_INDEX ? BLACK : EMPTY;
-            }
+            setPosition(x, y, getInitialPositionValue(y), board);
         }
     }
 }
 
 void addPositionToPossibleMoves(char x, char y, char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
-    char i = 2; // skip origin position x,y
+    char i = POSITION_LENGHT; // skip origin position x,y
 
     while (possibleMovesForPosition[i] != EMPTY) {
-        i += 2;
+        i += POSITION_LENGHT;
     }
 
     possibleMovesForPosition[i] = x;
     possibleMovesForPosition[i + 1] = y;
 }
 
+int isValidIndex(char i) {
+    return i >= 0 || i < BOARD_SIZE ? 1 : 0;
+}
+
 int isValidPosition(char x, char y) {
-    if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
-        return 0; // Position doesn't exist
-    } 
-    
-    return 1;
+    return isValidIndex(x) && isValidIndex(y) ? 1 : 0;
 }
 
 void addPositionToPossibleMovesIfValid(char x, char y, char board[BOARD_SIZE][BOARD_SIZE], char possibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
-    if (!isValidPosition(x, y) || board[x][y] != EMPTY) {
+    if (!isValidPosition(x, y) || getPosition(x, y, board) != EMPTY) {
         return;
     }
 
@@ -88,7 +103,7 @@ void initializePossibleMovesForPosition(char x, char y, char possibleMovesForPos
     possibleMovesForPosition[1] = y;
 
     // Set remaining array positions to EMPTY to avoid unexpected old memory values
-    for(char i = 2; i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH; i++) {
+    for(char i = POSITION_LENGHT; i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH; i++) {
         possibleMovesForPosition[i] = EMPTY;
     }
     // or use memset if #include <string.h> included because of other reasons
@@ -106,7 +121,7 @@ void getPossibleMovesForColor(char board[BOARD_SIZE][BOARD_SIZE], char color, ch
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
-            if (board[x][y] == color) {
+            if (getPosition(x, y, board) == color) {
                 initializePossibleMovesForPosition(x, y, possibleMoves[pieceCount]);
                 getPossibleMovesForPosition(board, possibleMoves[pieceCount]);
                 pieceCount++;
@@ -115,22 +130,9 @@ void getPossibleMovesForColor(char board[BOARD_SIZE][BOARD_SIZE], char color, ch
     }
 }
 
-int isValidMove(char fromX, char fromY, char toX, char toY, char color, char board[BOARD_SIZE][BOARD_SIZE]) {
-    if(!isValidPosition(fromX, fromY) || !isValidPosition(toX, toY)) {
-        return 0;
-    }
-    
-    if(board[fromX][fromY] != color || board[toX][toY] != EMPTY) {
-        return 0;
-    }
-    
-    // TODO: Check if move is valid
-    return 1;
-}
-
 void move(char fromX, char fromY, char toX, char toY, char board[BOARD_SIZE][BOARD_SIZE]) {
-    board[toX][toY] = board[fromX][fromY];
-    board[fromX][fromY] = EMPTY;
+    setPosition(toX, toY, getPosition(fromX, fromY, board), board);
+    setPosition(fromX, fromY, EMPTY, board);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -147,16 +149,16 @@ void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
 
     printf("\n");
 
-    for(char x = 0; x < BOARD_SIZE; ++x)
+    for(char y = BOARD_SIZE - 1; y >= 0; --y)
     {
-        printf(" y%d", x);
+        printf(" y%d", y);
 
-        for(char y = 0; y < BOARD_SIZE; ++y)
+        for(char x = 0; x < BOARD_SIZE; ++x)
         {
-            printf(" %c ", board[x][y]);
+            printf(" %c ", getPosition(x, y, board));
         }
 
-        printf("y%d \n", x);
+        printf("y%d \n", y);
     }
 
     printf("  ");
@@ -171,16 +173,14 @@ void printBoard(char board[BOARD_SIZE][BOARD_SIZE]) {
 void printPossibleMovesForPiece(char possibleMoves[MAX_POSSIBLE_MOVES_ARRAY_LENGTH]) {
     char x = possibleMoves[0];
     char y = possibleMoves[1];
-    char testX = 2;
-    char testY = 2;
     printf("(x%d,y%d) =>", x, y);
 
-    char i = 2; // Skip index for origin possition
+    char i = POSITION_LENGHT; // Skip index for origin possition
     while(i <= MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
         char toX = possibleMoves[i];
         char toY = possibleMoves[i + 1];
         printf(" (x%d,y%d)", toX, toY);
-        i += 2;
+        i += POSITION_LENGHT;
     }
 
     printf("\n");
@@ -204,33 +204,41 @@ void helpWithPossibleMoves(char board[BOARD_SIZE][BOARD_SIZE], char color) {
 char askForMoveI(char i[]) {
     char answer = -1;
 
-    while(answer == -1) {
+    do {
         printf("\nEnter %s: ", i);
         answer = getchar();
         getchar(); // Removes new line
         answer = answer - 48; // Converts char number to char index
 
-        if (answer < 0 || answer >= BOARD_SIZE) {
+        if (!isValidIndex(answer)) {
             answer = -1;
             printf("\nInvalid index. Please try again.\n");
         }
-    }
+    } while(answer == -1);
 
     return answer;
 }
 
-void askForMove(char board[BOARD_SIZE][BOARD_SIZE], char color) {
+int askForMove(char board[BOARD_SIZE][BOARD_SIZE], char color) {
     char fromX = askForMoveI("from x"); 
     char fromY = askForMoveI("from y");
 
+    if(getPosition(fromX, fromY, board) != color) {
+        printf("\n Error: Not your piece at %dx,%dy\n", fromX, fromY);
+        return 0;
+    }
+
     char toX = askForMoveI("to x"); 
     char toY = askForMoveI("to y");
-
-    if (isValidMove(fromX, fromY, toX, toY, color, board)) {
-        move(fromX, fromY, toX, toY, board);
-    } else {
-        printf("\n invalid move from %dx,%dy to %dx,%dy", fromX, fromY, toX, toY);
+    
+    if(getPosition(toX, toY, board) != EMPTY) {
+        printf("\n Error: To position not empty at %dx,%dy |%d|%c|\n", toX, toY, getPosition(toX, toY, board), getPosition(toX, toY, board));
+        return 0;
     }
+
+    move(fromX, fromY, toX, toY, board);
+    printBoard(board);
+    return 1;
 }
 
 int main() {
@@ -264,7 +272,9 @@ int main() {
                 break;
 
             case 'm':
-                askForMove(board, turn);
+                if (askForMove(board, turn)) {
+                    turn = turn == WHITE ? BLACK : WHITE;
+                }
                 break;
             
             case 'e':
