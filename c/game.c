@@ -116,6 +116,11 @@ void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition
 }
 
 // Example:
+// [0, 0, 0, 1, 1, 1], (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
+// [1, 0, 0, 1, 1, 1, 2, 1], (x:1,y:0) can go to (x:0,y:1) (x:1,y:1) (x:2,y:1) 
+typedef char PossibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
+
+// Example:
 // possibleMoves = [
 //  [0, 0, 0, 1, 1, 1], (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
 //  [1, 0, 0, 1, 1, 1, 2, 1], (x:1,y:0) can go to (x:0,y:1) (x:1,y:1) (x:2,y:1) 
@@ -135,6 +140,26 @@ void getPossibleMovesForColor(Board board, char color, PossibleMoves possibleMov
             }
         }
     }
+}
+
+int isValidMove(char fromX, char fromY, char toX, char toY, Board board) {
+    PossibleMovesForPosition possibleMovesForPosition;
+    initializePossibleMovesForPosition(fromX, fromY, possibleMovesForPosition);
+    getPossibleMovesForPosition(board, possibleMovesForPosition);
+
+    char i = POSITION_LENGHT; // Skip index for origin possition
+    while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMovesForPosition[i] != EMPTY) {
+        char x = possibleMovesForPosition[i];
+        char y = possibleMovesForPosition[i + 1];
+        
+        if(x == toY && y == toY) {
+            return 1;
+        }
+
+        i += POSITION_LENGHT;
+    }
+
+    return 0;
 }
 
 void move(char fromX, char fromY, char toX, char toY, Board board) {
@@ -239,7 +264,12 @@ int askForMove(Board board, char color) {
     char toY = askForMoveI("to y");
     
     if(getPosition(toX, toY, board) != EMPTY) {
-        printf("\n Error: To position not empty at %dx,%dy |%d|%c|\n", toX, toY, getPosition(toX, toY, board), getPosition(toX, toY, board));
+        printf("\n Error: To position not empty at %dx,%dy\n", toX, toY);
+        return 0;
+    }
+
+    if(!isValidMove(fromX, fromY, toX, toY, board)) {
+        printf("\n Error: Invalid move from %dx,%dy to %dx,%dy\n", fromX, fromY, toX, toY);
         return 0;
     }
 
