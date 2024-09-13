@@ -69,7 +69,7 @@ void addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition possibl
 }
 
 int isValidIndex(char i) {
-    return i >= 0 || i < BOARD_SIZE ? 1 : 0;
+    return i >= 0 && i < BOARD_SIZE ? 1 : 0;
 }
 
 int isValidPosition(char x, char y) {
@@ -183,7 +183,7 @@ void printPossibleMovesForPiece(PossibleMovesForPosition possibleMoves) {
     printf("(x%d,y%d) =>", x, y);
 
     char i = POSITION_LENGHT; // Skip index for origin possition
-    while(i <= MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
+    while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
         char toX = possibleMoves[i];
         char toY = possibleMoves[i + 1];
         printf(" (x%d,y%d)", toX, toY);
