@@ -57,15 +57,28 @@ void initializeBoard(Board board) {
 
 typedef char PossibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
 
-void addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition possibleMovesForPosition) {
+// 0: Aborting position already added
+// 1: Position addded
+char addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition possibleMovesForPosition) {
     char i = POSITION_LENGHT; // skip origin position x,y
 
     while (possibleMovesForPosition[i] != EMPTY) {
+        if(
+            x == possibleMovesForPosition[i]
+            && y == possibleMovesForPosition[i + 1]
+        ) {
+            printf("\n Aborting position already added x%d,y%d", x, y);
+            return 0;
+        }
+
         i += POSITION_LENGHT;
     }
 
     possibleMovesForPosition[i] = x;
     possibleMovesForPosition[i + 1] = y;
+
+    printf("\n Position added x%d,y%d", x, y);
+    return 1;
 }
 
 int isValidIndex(char i) {
@@ -76,12 +89,50 @@ int isValidPosition(char x, char y) {
     return isValidIndex(x) && isValidIndex(y) ? 1 : 0;
 }
 
+void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board board, PossibleMovesForPosition possibleMovesForPosition) {
+    char nextX = x + addX;
+    char nextY = y + addY;
+    if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) != EMPTY) {
+        nextX = nextX + addX;
+        nextY = nextY + addY;
+        if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) == EMPTY) {
+            if(addPositionToPossibleMoves(nextX, nextY, possibleMovesForPosition)){
+                // TODO: Unlock the recursion soon...
+                // addJumpsToPossibleMoves(nextX, nextY, board, possibleMovesForPosition);
+            }
+        }
+    }
+}
+
+const char MAX_NEXT_POSITIONS = 8;
+
+// Add to [[x, y], ...] to get to the next position
+const char addForNexPositions[8][2] = {
+    {-1, 1}, // Top left 
+    {0, 1}, // Top
+    {1, 1}, // Top right
+
+    {-1, 0}, // Left
+    {1, 0}, // Right
+
+    {-1, -1}, // Bottom left
+    {0, -1}, // Bottom
+    {1, -1}, // Bottom right
+};
+
 void addPositionToPossibleMovesIfValid(char x, char y, Board board, PossibleMovesForPosition possibleMovesForPosition) {
+    printf("\naddPositionToPossibleMovesIfValid x%d,y%d", x, y);
     if (!isValidPosition(x, y) || getPosition(x, y, board) != EMPTY) {
         return;
     }
 
     addPositionToPossibleMoves(x, y, possibleMovesForPosition);
+
+    for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
+        char addX = addForNexPositions[i][0];
+        char addY = addForNexPositions[i][0];
+        addJumpsToPossibleMoves(x, addX, y, addY, board, possibleMovesForPosition);
+    }
 }
 
 // Example:
@@ -91,16 +142,14 @@ void getPossibleMovesForPosition(Board board, PossibleMovesForPosition possibleM
     char x = possibleMovesForPosition[0];
     char y = possibleMovesForPosition[1];
 
-    addPositionToPossibleMovesIfValid(x - 1, y - 1, board, possibleMovesForPosition); // Top left
-    addPositionToPossibleMovesIfValid(x, y - 1, board, possibleMovesForPosition); // Top
-    addPositionToPossibleMovesIfValid(x + 1, y - 1, board, possibleMovesForPosition); // Top right
+    printf("\n\n getPossibleMovesForPosition x%d,y%d:", x, y);
 
-    addPositionToPossibleMovesIfValid(x - 1, y, board, possibleMovesForPosition); // Left
-    addPositionToPossibleMovesIfValid(x + 1, y, board, possibleMovesForPosition); // Right
-
-    addPositionToPossibleMovesIfValid(x - 1, y + 1, board, possibleMovesForPosition); // Bottom left
-    addPositionToPossibleMovesIfValid(x, y + 1, board, possibleMovesForPosition); // Bottom
-    addPositionToPossibleMovesIfValid(x + 1, y + 1, board, possibleMovesForPosition); // Bottom right
+    for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
+        char addX = addForNexPositions[i][0];
+        char addY = addForNexPositions[i][1];
+        printf("\n addX: %d, addY %d", addX, addY);
+        addPositionToPossibleMovesIfValid(x + addX, y + addY, board, possibleMovesForPosition);
+    }
 }
 
 void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition possibleMovesForPosition) {
@@ -152,10 +201,12 @@ int isValidMove(char fromX, char fromY, char toX, char toY, Board board) {
         char x = possibleMovesForPosition[i];
         char y = possibleMovesForPosition[i + 1];
         
-        if(x == toY && y == toY) {
+        if(x == toX && y == toY) {
+            printf("\n In possibleMovesForPosition x%d,y%d", x, y);
             return 1;
         }
 
+        printf("\n Not in possibleMovesForPosition x%d,y%d", x, y);
         i += POSITION_LENGHT;
     }
 
