@@ -5,10 +5,10 @@ Play online game at [jumpoverjump.com](https://jumpoverjump.com/).
 
 Compile game:
 ```bash
-   clang game.c -o game
+   clang ./src/game.c -o ./dist/game
 ```
 
 Run game:
 ```bash
-   ./game
+   ./dist/game
 ```
