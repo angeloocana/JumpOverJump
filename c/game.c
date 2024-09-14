@@ -92,15 +92,24 @@ int isValidPosition(char x, char y) {
 void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board board, PossibleMovesForPosition possibleMovesForPosition) {
     char nextX = x + addX;
     char nextY = y + addY;
+    printf("\naddJumpsToPossibleMoves x%d + %d, y%d + %d = x%d,y%d", x, addX, y, addY, nextX, nextY);
+
     if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) != EMPTY) {
         nextX = nextX + addX;
         nextY = nextY + addY;
         if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) == EMPTY) {
             if(addPositionToPossibleMoves(nextX, nextY, possibleMovesForPosition)){
+                printf("\njump position added");
                 // TODO: Unlock the recursion soon...
                 // addJumpsToPossibleMoves(nextX, nextY, board, possibleMovesForPosition);
+            } else {
+                printf("\njump position already added");
             }
+        } else {
+            printf("\njump position not valid or not empty");
         }
+    } else {
+        printf("\nnot valid or empty");
     }
 }
 
@@ -120,18 +129,24 @@ const char addForNexPositions[8][2] = {
     {1, -1}, // Bottom right
 };
 
-void addPositionToPossibleMovesIfValid(char x, char y, Board board, PossibleMovesForPosition possibleMovesForPosition) {
+void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, Board board, PossibleMovesForPosition possibleMovesForPosition) {
+    char x = fromX + addX;
+    char y = fromY + addY;
+
     printf("\naddPositionToPossibleMovesIfValid x%d,y%d", x, y);
-    if (!isValidPosition(x, y) || getPosition(x, y, board) != EMPTY) {
+    if (!isValidPosition(x, y)) {
         return;
     }
 
-    addPositionToPossibleMoves(x, y, possibleMovesForPosition);
-
-    for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
-        char addX = addForNexPositions[i][0];
-        char addY = addForNexPositions[i][0];
-        addJumpsToPossibleMoves(x, addX, y, addY, board, possibleMovesForPosition);
+    if(getPosition(x, y, board) == EMPTY) {
+        addPositionToPossibleMoves(x, y, possibleMovesForPosition);
+    } else {
+        addJumpsToPossibleMoves(fromX, addX, fromY, addY, board, possibleMovesForPosition);
+        // for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
+        //     char addX = addForNexPositions[i][0];
+        //     char addY = addForNexPositions[i][0];
+        //     addJumpsToPossibleMoves(x, addX, y, addY, board, possibleMovesForPosition);
+        // }
     }
 }
 
@@ -148,7 +163,7 @@ void getPossibleMovesForPosition(Board board, PossibleMovesForPosition possibleM
         char addX = addForNexPositions[i][0];
         char addY = addForNexPositions[i][1];
         printf("\n addX: %d, addY %d", addX, addY);
-        addPositionToPossibleMovesIfValid(x + addX, y + addY, board, possibleMovesForPosition);
+        addPositionToPossibleMovesIfValid(x, addX, y, addY, board, possibleMovesForPosition);
     }
 }
 
