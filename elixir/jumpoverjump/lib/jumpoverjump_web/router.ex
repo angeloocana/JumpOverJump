@@ -18,6 +18,8 @@ defmodule JumpoverjumpWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/game", GameLive, :game
   end
 
   # Other scopes may use custom stacks.
