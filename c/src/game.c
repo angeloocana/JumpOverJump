@@ -214,6 +214,28 @@ void move(char fromX, char fromY, char toX, char toY, Board board) {
     setPosition(fromX, fromY, EMPTY, board);
 }
 
+void guessBestMove(Board board, char color, char bestMove[2]) {
+    PossibleMoves possibleMoves;
+    getPossibleMovesForColor(board, color, possibleMoves);
+
+    for(char i = 0; i < BOARD_SIZE; ++i)
+    {
+        char x = possibleMoves[i][0];
+        char y = possibleMoves[i][1];
+
+        char i = POSITION_LENGHT; // Skip index for origin possition
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
+            char toX = possibleMoves[i];
+            char toY = possibleMoves[i + 1];
+            
+            // TODO: Implement tree search to guess best move
+
+            i += POSITION_LENGHT;
+        }
+    }
+
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 // Terminal
 /////////////////////////////////////////////////////////////////////////////////
