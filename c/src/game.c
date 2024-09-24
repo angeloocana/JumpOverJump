@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h> // Add this at the top of the file with other includes
 
 /////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -68,6 +69,32 @@ void initializeBoard(Board board) {
             setPosition(x, y, getInitialPositionValue(y), board);
         }
     }
+}
+
+char getWinner(Board board) {
+    char whiteCount = 0;
+    char blackCount = 0;
+
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        if(getPosition(x, 0, board) == BLACK) {
+            blackCount++;
+        } 
+        
+        if(getPosition(x, LAST_ROW_INDEX, board) == WHITE) {
+            whiteCount++;
+        }
+    }
+
+    if(whiteCount == BOARD_SIZE) {
+        return WHITE;
+    }
+
+    if(blackCount == BOARD_SIZE) {
+        return BLACK;
+    }
+
+    return EMPTY;
 }
 
 typedef char PossibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
@@ -214,26 +241,104 @@ void move(char fromX, char fromY, char toX, char toY, Board board) {
     setPosition(fromX, fromY, EMPTY, board);
 }
 
-void guessBestMove(Board board, char color, char bestMove[2]) {
-    PossibleMoves possibleMoves;
-    getPossibleMovesForColor(board, color, possibleMoves);
+typedef struct MoveHistory {
+    char fromX;
+    char fromY;
+    char toX;
+    char toY;
+    Board boardAfterMove;
+    char color;
+    int win_count;
+    int game_count;
+    struct MoveHistory *nextMoves[MAX_NEXT_POSITIONS];
+} MoveHistory;
 
+void copyBoard(Board source, Board destination) {
+    memcpy(destination, source, sizeof(Board));
+}
+
+char getNextColor(char color) {
+    return color == WHITE ? BLACK : WHITE;
+}
+
+char MAX_EXPLORE_DEPTH = 5;
+char exploreDepth = 0;
+char MAX_EXPLORE_NEXT_POSITIONS = 3;
+
+void printBoard(Board board); // TODO: Removel after debuging
+
+// Returns winner
+char exploreNextMoves(MoveHistory previous) {
+    char winner = getWinner(previous.boardAfterMove);
+    if(winner != EMPTY) {
+        if(winner == previous.color) {
+            previous.win_count++;
+        }
+        previous.game_count++;
+        return winner;
+    } 
+
+    if(exploreDepth >= MAX_EXPLORE_DEPTH) {
+        return EMPTY;
+    }
+
+    exploreDepth++;
+
+    char nextColor = getNextColor(previous.color);
+    PossibleMoves possibleMoves;
+    getPossibleMovesForColor(previous.boardAfterMove, nextColor, possibleMoves);
+
+    char nextMovesCount = 0;
     for(char i = 0; i < BOARD_SIZE; ++i)
     {
         char x = possibleMoves[i][0];
         char y = possibleMoves[i][1];
 
         char i = POSITION_LENGHT; // Skip index for origin possition
-        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY) {
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY && nextMovesCount < MAX_EXPLORE_NEXT_POSITIONS) {
             char toX = possibleMoves[i];
             char toY = possibleMoves[i + 1];
-            
-            // TODO: Implement tree search to guess best move
+
+            Board boardAfterMove;
+            copyBoard(previous.boardAfterMove, boardAfterMove);
+            move(x, y, toX, toY, boardAfterMove);
+            printBoard(boardAfterMove);
+
+            MoveHistory nextMoveHistory = {
+                .fromX = x,
+                .fromY = y,
+                .toX = toX,
+                .toY = toY,
+                .boardAfterMove = boardAfterMove,
+                .color = nextColor,
+                .win_count = 0,
+                .game_count = 0,
+            };
+
+            previous.nextMoves[nextMovesCount] = nextMoveHistory;
+            nextMovesCount++;
+
+            exploreNextMoves(nextMoveHistory);
 
             i += POSITION_LENGHT;
         }
     }
 
+    return EMPTY;
+}
+
+void guessBestMove(Board board, char color) {
+    exploreDepth = 0;
+    MoveHistory initialMoveHistory = {
+        .boardAfterMove = board,
+        .color = color,
+        .win_count = 0,
+        .game_count = 0,
+    };
+
+    exploreNextMoves(initialMoveHistory);
+
+    // TODO: Find bext next move
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -379,10 +484,14 @@ int main() {
 
             case 'm':
                 if (askForMove(board, turn)) {
-                    turn = turn == WHITE ? BLACK : WHITE;
+                    turn = getNextColor(turn);
                 }
                 break;
-            
+
+            case 'g':
+                guessBestMove(board, turn);
+                break;
+
             case 'e':
                 printf("Goodbye!\n");
                 exitGame = 1;
