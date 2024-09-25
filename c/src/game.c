@@ -246,11 +246,11 @@ typedef struct MoveHistory {
     char fromY;
     char toX;
     char toY;
-    Board boardAfterMove;
+    Board *pBoardAfterMove;
     char color;
     int win_count;
     int game_count;
-    struct MoveHistory *nextMoves[MAX_NEXT_POSITIONS];
+    struct MoveHistory *pNextMoves[MAX_NEXT_POSITIONS];
 } MoveHistory;
 
 void copyBoard(Board source, Board destination) {
@@ -263,13 +263,13 @@ char getNextColor(char color) {
 
 char MAX_EXPLORE_DEPTH = 5;
 char exploreDepth = 0;
-char MAX_EXPLORE_NEXT_POSITIONS = 3;
+char MAX_EXPLORE_NEXT_POSITIONS = 2;
 
 void printBoard(Board board); // TODO: Removel after debuging
 
 // Returns winner
 char exploreNextMoves(MoveHistory previous) {
-    char winner = getWinner(previous.boardAfterMove);
+    char winner = getWinner(*previous.pBoardAfterMove);
     if(winner != EMPTY) {
         if(winner == previous.color) {
             previous.win_count++;
@@ -286,21 +286,21 @@ char exploreNextMoves(MoveHistory previous) {
 
     char nextColor = getNextColor(previous.color);
     PossibleMoves possibleMoves;
-    getPossibleMovesForColor(previous.boardAfterMove, nextColor, possibleMoves);
+    getPossibleMovesForColor(*previous.pBoardAfterMove, nextColor, possibleMoves);
 
     char nextMovesCount = 0;
-    for(char i = 0; i < BOARD_SIZE; ++i)
+    for(char pieceIndex = 0; pieceIndex < BOARD_SIZE; ++pieceIndex)
     {
-        char x = possibleMoves[i][0];
-        char y = possibleMoves[i][1];
+        char x = possibleMoves[pieceIndex][0];
+        char y = possibleMoves[pieceIndex][1];
 
         char i = POSITION_LENGHT; // Skip index for origin possition
-        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[i] != EMPTY && nextMovesCount < MAX_EXPLORE_NEXT_POSITIONS) {
-            char toX = possibleMoves[i];
-            char toY = possibleMoves[i + 1];
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[pieceIndex][i] != EMPTY && nextMovesCount < MAX_EXPLORE_NEXT_POSITIONS) {
+            char toX = possibleMoves[pieceIndex][i];
+            char toY = possibleMoves[pieceIndex][i + 1];
 
             Board boardAfterMove;
-            copyBoard(previous.boardAfterMove, boardAfterMove);
+            copyBoard(*previous.pBoardAfterMove, boardAfterMove);
             move(x, y, toX, toY, boardAfterMove);
             printBoard(boardAfterMove);
 
@@ -309,13 +309,13 @@ char exploreNextMoves(MoveHistory previous) {
                 .fromY = y,
                 .toX = toX,
                 .toY = toY,
-                .boardAfterMove = boardAfterMove,
+                .pBoardAfterMove = &boardAfterMove,
                 .color = nextColor,
                 .win_count = 0,
                 .game_count = 0,
             };
 
-            previous.nextMoves[nextMovesCount] = nextMoveHistory;
+            previous.pNextMoves[nextMovesCount] = &nextMoveHistory;
             nextMovesCount++;
 
             exploreNextMoves(nextMoveHistory);
@@ -328,14 +328,17 @@ char exploreNextMoves(MoveHistory previous) {
 }
 
 void guessBestMove(Board board, char color) {
-    exploreDepth = 0;
+    Board boardCopy; // TODO: How can I avoid this copy?
+    copyBoard(board, boardCopy);
+
     MoveHistory initialMoveHistory = {
-        .boardAfterMove = board,
+        .pBoardAfterMove = &boardCopy,
         .color = color,
         .win_count = 0,
         .game_count = 0,
     };
 
+    exploreDepth = 0;
     exploreNextMoves(initialMoveHistory);
 
     // TODO: Find bext next move
@@ -466,6 +469,7 @@ int main() {
         printf("\nWhat would you like to do? Enter:\n");
         printf("'m' move\n");
         printf("'h' help with possible moves\n");
+        printf("'g' guess best move\n");
         printf("'b' board\n");
         printf("'e' exit\n");
 
