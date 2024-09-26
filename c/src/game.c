@@ -327,12 +327,9 @@ char exploreNextMoves(MoveHistory previous) {
     return EMPTY;
 }
 
-void guessBestMove(Board board, char color) {
-    Board boardCopy; // TODO: How can I avoid this copy?
-    copyBoard(board, boardCopy);
-
+void guessBestMove(Board *pBoard, char color) {
     MoveHistory initialMoveHistory = {
-        .pBoardAfterMove = &boardCopy,
+        .pBoardAfterMove = pBoard,
         .color = color,
         .win_count = 0,
         .game_count = 0,
@@ -493,7 +490,7 @@ int main() {
                 break;
 
             case 'g':
-                guessBestMove(board, turn);
+                guessBestMove(&board, turn);
                 break;
 
             case 'e':
