@@ -262,67 +262,88 @@ char getNextColor(char color) {
 }
 
 char MAX_EXPLORE_DEPTH = 5;
-char exploreDepth = 0;
 char MAX_EXPLORE_NEXT_POSITIONS = 2;
 
 void printBoard(Board board); // TODO: Removel after debuging
 
-// Returns winner
-char exploreNextMoves(MoveHistory previous) {
-    char winner = getWinner(*previous.pBoardAfterMove);
-    if(winner != EMPTY) {
-        if(winner == previous.color) {
-            previous.win_count++;
+char exploreNextMovesForColor(MoveHistory current, int depth);
+
+char isMovingForward(char fromX, char fromY, char toX, char toY, char color) {
+    return color == WHITE ? toY < fromY : toY > fromY;
+}
+
+void exploreNextMovesForPosition(MoveHistory current, PossibleMovesForPosition possibleMovesForPosition, int depth, char nextMovesCount, char nextColor) {
+    char x = possibleMovesForPosition[0];
+    char y = possibleMovesForPosition[1];
+
+    char i = POSITION_LENGHT; // Skip index for origin possition
+    while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMovesForPosition[i] != EMPTY && nextMovesCount < MAX_EXPLORE_NEXT_POSITIONS) {
+        char toX = possibleMovesForPosition[i];
+        char toY = possibleMovesForPosition[i + 1];
+        i += POSITION_LENGHT;
+
+        if(!isMovingForward(x, y, toX, toY, current.color)) {
+            printf("\nNot moving forward from %dx,%dy to %dx,%dy\n", x, y, toX, toY);
+            continue;
         }
-        previous.game_count++;
+
+        Board boardAfterMove;
+        copyBoard(*current.pBoardAfterMove, boardAfterMove);
+        move(x, y, toX, toY, boardAfterMove);
+
+        MoveHistory nextMoveHistory = {
+            .fromX = x,
+            .fromY = y,
+            .toX = toX,
+            .toY = toY,
+            .pBoardAfterMove = &boardAfterMove,
+            .color = nextColor,
+            .win_count = 0,
+            .game_count = 0,
+        };
+
+        current.pNextMoves[nextMovesCount] = &nextMoveHistory;
+        nextMovesCount++;
+
+        exploreNextMovesForColor(nextMoveHistory, depth + 1);
+    }
+}
+
+// Returns winner
+char exploreNextMovesForColor(MoveHistory current, int depth) {
+    char winner = getWinner(*current.pBoardAfterMove);
+
+    printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    printf("\nExploring depth: %d\n", depth);
+    printf("\nCurrent color: %c\n", current.color);
+    printf("\nWinner: %c\n", winner);
+    printBoard(*current.pBoardAfterMove);
+
+    if(winner != EMPTY) {
+        if(winner == current.color) {
+            current.win_count++;
+        }
+        current.game_count++;
+
+        printf("\ngame finished\n");
         return winner;
     } 
 
-    if(exploreDepth >= MAX_EXPLORE_DEPTH) {
+    if(depth >= MAX_EXPLORE_DEPTH) {
         return EMPTY;
     }
 
-    exploreDepth++;
-
-    char nextColor = getNextColor(previous.color);
+    char nextColor = getNextColor(current.color);
     PossibleMoves possibleMoves;
-    getPossibleMovesForColor(*previous.pBoardAfterMove, nextColor, possibleMoves);
+    getPossibleMovesForColor(*current.pBoardAfterMove, nextColor, possibleMoves);
 
     char nextMovesCount = 0;
     for(char pieceIndex = 0; pieceIndex < BOARD_SIZE; ++pieceIndex)
     {
-        char x = possibleMoves[pieceIndex][0];
-        char y = possibleMoves[pieceIndex][1];
-
-        char i = POSITION_LENGHT; // Skip index for origin possition
-        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[pieceIndex][i] != EMPTY && nextMovesCount < MAX_EXPLORE_NEXT_POSITIONS) {
-            char toX = possibleMoves[pieceIndex][i];
-            char toY = possibleMoves[pieceIndex][i + 1];
-
-            Board boardAfterMove;
-            copyBoard(*previous.pBoardAfterMove, boardAfterMove);
-            move(x, y, toX, toY, boardAfterMove);
-            printBoard(boardAfterMove);
-
-            MoveHistory nextMoveHistory = {
-                .fromX = x,
-                .fromY = y,
-                .toX = toX,
-                .toY = toY,
-                .pBoardAfterMove = &boardAfterMove,
-                .color = nextColor,
-                .win_count = 0,
-                .game_count = 0,
-            };
-
-            previous.pNextMoves[nextMovesCount] = &nextMoveHistory;
-            nextMovesCount++;
-
-            exploreNextMoves(nextMoveHistory);
-
-            i += POSITION_LENGHT;
-        }
+        exploreNextMovesForPosition(current, possibleMoves[pieceIndex], depth, nextMovesCount, nextColor);
     }
+
+    printf("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     return EMPTY;
 }
@@ -335,8 +356,7 @@ void guessBestMove(Board *pBoard, char color) {
         .game_count = 0,
     };
 
-    exploreDepth = 0;
-    exploreNextMoves(initialMoveHistory);
+    exploreNextMovesForColor(initialMoveHistory, 0);
 
     // TODO: Find bext next move
 }
