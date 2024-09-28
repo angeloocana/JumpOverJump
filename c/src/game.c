@@ -20,7 +20,7 @@ const char EMPTY = '_';
 // 32-1 = 31   Piece can't move to current position
 // TODO: Confirm right number. I'm guessing the max is 16 moves, 
 // with some quick tests the maximum I got were 15 moves.
-const char MAX_POSSIBLE_MOVES = 16;
+const char MAX_POSSIBLE_MOVES = 15;
 
 const char POSITION_LENGHT = 2;
 const char MAX_POSSIBLE_MOVES_ARRAY_LENGTH = POSITION_LENGHT + (MAX_POSSIBLE_MOVES * POSITION_LENGHT);
@@ -318,25 +318,32 @@ void getBoardHash(Board *pBoard, BoardHash *pHash) {
     printf("\nBoard hash: %s\n", *pHash);
 }
 
-typedef struct BoardHistoryMove {
-    Position from;
+typedef struct BoardHistoryMoveTo {
     Position to;
     unsigned long long win_count;
     unsigned long long game_count;
-} BoardHistoryMove;
+} BoardHistoryMoveTo;
 
-typedef BoardHistoryMove BoardHistoryMovesForPiece[MAX_POSSIBLE_MOVES];
+typedef struct BoardHistoryMovesForPiece {
+    char moveCount;
+    Position from;
+    BoardHistoryMoveTo tos[MAX_POSSIBLE_MOVES];
+} BoardHistoryMovesForPiece;
 
 typedef BoardHistoryMovesForPiece BoardHistoryMovesForColor[TOTAL_PIECES_PER_COLOR];
 
 FILE *openBoardHistoryFile(BoardHash *pBoardHash, char color, const char * __restrict __mode) {
+    printf("\nsizeof(BoardHistoryMovesForColor) %zu\n", sizeof(BoardHistoryMovesForColor));
+
     printf("\nOpening board history file\n");
     // 21 chars from fixed file name
     // 16 chars for hash
     // 1 char for color
     // 21 + 16 + 1 = 38
     char boardHistoryFileName[100];
-    sprintf(boardHistoryFileName, "../db/%s_%c.bin", *pBoardHash, color);
+    // sprintf(boardHistoryFileName, "../db/%s_%c.bin", *pBoardHash, color);
+
+    sprintf(boardHistoryFileName, "../db/%c.bin", color);
     printf("\nOpening board history file: %s\n", boardHistoryFileName);
     return fopen(boardHistoryFileName, __mode);
     // FILE *f = fopen("c.bin", __mode);
@@ -495,27 +502,32 @@ void guessBestMove(Board *pBoard, char color) {
 
         printf("\nPiece %d: (x%d,y%d)\n", pieceIndex, x, y);
 
-        char possibleMovesCount = 0;
+        BoardHistoryMovesForPiece historyMovesForPiece = {
+            .from = getPositionFromCoordinates(x, y),
+            .moveCount = 0,
+        };
+
         char i = POSITION_LENGHT; // Skip index for origin possition
-        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[pieceIndex][i] != EMPTY) {
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH) {
             char toX = possibleMoves[pieceIndex][i];
             char toY = possibleMoves[pieceIndex][i + 1];
             i += POSITION_LENGHT;
 
-            printf("\tPossible move %d: (x%d,y%d)\n", possibleMovesCount, toX, toY);
+            printf("\tPossible move %d: (x%d,y%d)\n", historyMovesForPiece.moveCount, toX, toY);
 
-            BoardHistoryMove boardHistoryMove = {
-                .from = getPositionFromCoordinates(x, y),
+            BoardHistoryMoveTo historyMoveTo = {
                 .to = getPositionFromCoordinates(toX, toY),
                 .win_count = 0,
                 .game_count = 0,
             };
 
-            printf("\tBoard history move: from %d to %d\n", boardHistoryMove.from, boardHistoryMove.to);
+            printf("\tBoard history move: from %d to %d\n", historyMovesForPiece.from, historyMoveTo.to);
 
-            boardHistory[pieceIndex][possibleMovesCount] = boardHistoryMove;
-            possibleMovesCount++;
+            historyMovesForPiece.tos[historyMovesForPiece.moveCount] = historyMoveTo;
+            historyMovesForPiece.moveCount++;
         }
+
+        boardHistory[pieceIndex] = historyMovesForPiece;
         printf("\n -------------------\n");
     }
 
