@@ -6,6 +6,8 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 const char BOARD_SIZE = 8;
+const char TOTAL_PIECES_PER_COLOR = BOARD_SIZE;
+const char TOTAL_PIECES = BOARD_SIZE + BOARD_SIZE;
 const char LAST_ROW_INDEX = BOARD_SIZE - 1;
 const char WHITE = 'O';
 const char BLACK = 'X';
@@ -23,6 +25,16 @@ const char MAX_POSSIBLE_MOVES = 16;
 const char POSITION_LENGHT = 2;
 const char MAX_POSSIBLE_MOVES_ARRAY_LENGTH = POSITION_LENGHT + (MAX_POSSIBLE_MOVES * POSITION_LENGHT);
 
+//    x0 x1 x2 x3 x4 x5 x6 x7
+//  y7 X  X  X  X  X  X  X  X y7 
+//  y6 _  _  _  _  _  _  _  _ y6 
+//  y5 _  _  _  _  _  _  _  _ y5 
+//  y4 _  _  _  _  _  _  _  _ y4 
+//  y3 _  _  _  _  _  _  _  _ y3 
+//  y2 _  _  _  _  _  _  _  _ y2 
+//  y1 _  _  _  _  _  _  _  _ y1 
+//  y0 O  O  O  O  O  O  O  O y0 
+//    x0 x1 x2 x3 x4 x5 x6 x7
 typedef char Board[BOARD_SIZE][BOARD_SIZE];
 
 const char MAX_NEXT_POSITIONS = 8;
@@ -45,7 +57,7 @@ void setPosition(char x, char y, char value, Board board) {
     board[x][y] = value;
 }
 
-char getPosition(char x, char y, Board board) {
+char getPositionValue(char x, char y, Board board) {
     return board[x][y];
 }
 
@@ -75,22 +87,22 @@ char getWinner(Board board) {
     char whiteCount = 0;
     char blackCount = 0;
 
-    for(char x = 0; x < BOARD_SIZE; ++x)
+    for(char x = 0; x < TOTAL_PIECES_PER_COLOR; ++x)
     {
-        if(getPosition(x, 0, board) == BLACK) {
+        if(getPositionValue(x, 0, board) == BLACK) {
             blackCount++;
         } 
         
-        if(getPosition(x, LAST_ROW_INDEX, board) == WHITE) {
+        if(getPositionValue(x, LAST_ROW_INDEX, board) == WHITE) {
             whiteCount++;
         }
     }
 
-    if(whiteCount == BOARD_SIZE) {
+    if(whiteCount == TOTAL_PIECES_PER_COLOR) {
         return WHITE;
     }
 
-    if(blackCount == BOARD_SIZE) {
+    if(blackCount == TOTAL_PIECES_PER_COLOR) {
         return BLACK;
     }
 
@@ -133,10 +145,10 @@ void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board board, 
     char nextX = x + addX;
     char nextY = y + addY;
 
-    if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) != EMPTY) {
+    if(isValidPosition(nextX, nextY) && getPositionValue(nextX, nextY, board) != EMPTY) {
         nextX = nextX + addX;
         nextY = nextY + addY;
-        if(isValidPosition(nextX, nextY) && getPosition(nextX, nextY, board) == EMPTY) {
+        if(isValidPosition(nextX, nextY) && getPositionValue(nextX, nextY, board) == EMPTY) {
             if(addPositionToPossibleMoves(nextX, nextY, possibleMovesForPosition)){
                 for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
                     char nextAddX = addForNexPositions[i][0];
@@ -156,7 +168,7 @@ void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char a
         return;
     }
 
-    if(getPosition(x, y, board) == EMPTY) {
+    if(getPositionValue(x, y, board) == EMPTY) {
         addPositionToPossibleMoves(x, y, possibleMovesForPosition);
     } else {
         addJumpsToPossibleMoves(fromX, addX, fromY, addY, board, possibleMovesForPosition);
@@ -199,7 +211,7 @@ typedef char PossibleMovesForPosition[MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
 //  [0, 0, 0, 1, 1, 1], (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
 //  [1, 0, 0, 1, 1, 1, 2, 1], (x:1,y:0) can go to (x:0,y:1) (x:1,y:1) (x:2,y:1) 
 // }
-typedef char PossibleMoves[BOARD_SIZE][MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
+typedef char PossibleMoves[TOTAL_PIECES_PER_COLOR][MAX_POSSIBLE_MOVES_ARRAY_LENGTH];
 
 void getPossibleMovesForColor(Board board, char color, PossibleMoves possibleMoves) {
     char pieceCount = 0;
@@ -207,7 +219,7 @@ void getPossibleMovesForColor(Board board, char color, PossibleMoves possibleMov
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
-            if (getPosition(x, y, board) == color) {
+            if (getPositionValue(x, y, board) == color) {
                 initializePossibleMovesForPosition(x, y, possibleMoves[pieceCount]);
                 getPossibleMovesForPosition(board, possibleMoves[pieceCount]);
                 pieceCount++;
@@ -237,7 +249,7 @@ int isValidMove(char fromX, char fromY, char toX, char toY, Board board) {
 }
 
 void move(char fromX, char fromY, char toX, char toY, Board board) {
-    setPosition(toX, toY, getPosition(fromX, fromY, board), board);
+    setPosition(toX, toY, getPositionValue(fromX, fromY, board), board);
     setPosition(fromX, fromY, EMPTY, board);
 }
 
@@ -252,6 +264,126 @@ typedef struct MoveHistory {
     int game_count;
     struct MoveHistory *pNextMoves[MAX_NEXT_POSITIONS];
 } MoveHistory;
+
+// Board by position index with coordinates:
+//    x0 x1 x2 x3 x4 x5 x6 x7
+//  y7 7 15 23 31 39 47 55 63 y7 
+//  y6 6 14 22 30 38 46 54 62 y6 
+//  y5 5 13 21 29 37 45 53 61 y5 
+//  y4 4 12 20 28 36 44 52 60 y4 
+//  y3 3 11 19 27 35 43 51 59 y3 
+//  y2 2 10 18 26 34 42 50 58 y2 
+//  y1 1  9 17 25 33 41 49 57 y1 
+//  y0 O  8 16 24 32 40 48 56 y0 
+//    x0 x1 x2 x3 x4 x5 x6 x7
+typedef unsigned char Position;
+
+const unsigned char MAX_POSITIONS = 64;
+const unsigned char POSITION_INCREMENT_FOR_WHITE = MAX_POSITIONS;
+const unsigned char POSITION_INCREMENT_FOR_BLACK = POSITION_INCREMENT_FOR_WHITE + MAX_POSITIONS;
+
+Position getPositionFromCoordinates(char x, char y) {
+    return (x * BOARD_SIZE) + y;
+}
+
+typedef Position BoardHash[TOTAL_PIECES];
+
+void getBoardHash(Board *pBoard, BoardHash *pHash) {
+    printf("\nGetting board hash\n");
+    Position position = 0;
+    char pieceCount = 0;
+
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        for(char y = 0; y < BOARD_SIZE; ++y)
+        {
+            printf("\nPosition: %d\n", position);
+            char piece = getPositionValue(x, y, *pBoard);
+            printf("\nPiece: %c\n", piece);
+            switch(piece) {
+                case WHITE:
+                    (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_WHITE;
+                    printf("\nWHITE: %d\n", (*pHash)[pieceCount]);
+                    pieceCount++;
+                    break;
+                case BLACK:
+                    (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_BLACK;
+                    printf("\nBLACK: %d\n", (*pHash)[pieceCount]);
+                    pieceCount++;
+                    break;
+            }
+            position++;
+        }
+    }
+    printf("\nBoard hash: %s\n", *pHash);
+}
+
+typedef struct BoardHistoryMove {
+    Position from;
+    Position to;
+    unsigned long long win_count;
+    unsigned long long game_count;
+} BoardHistoryMove;
+
+typedef BoardHistoryMove BoardHistoryMovesForPiece[MAX_POSSIBLE_MOVES];
+
+typedef BoardHistoryMovesForPiece BoardHistoryMovesForColor[TOTAL_PIECES_PER_COLOR];
+
+FILE *openBoardHistoryFile(BoardHash *pBoardHash, char color, const char * __restrict __mode) {
+    printf("\nOpening board history file\n");
+    // 21 chars from fixed file name
+    // 16 chars for hash
+    // 1 char for color
+    // 21 + 16 + 1 = 38
+    char boardHistoryFileName[100];
+    sprintf(boardHistoryFileName, "../db/%s_%c.bin", *pBoardHash, color);
+    printf("\nOpening board history file: %s\n", boardHistoryFileName);
+    return fopen(boardHistoryFileName, __mode);
+    // FILE *f = fopen("c.bin", __mode);
+    // printf("\nBoard history file opened %p \n", f);
+    // return f;
+}
+
+void getBoardHistoryFromDisk(BoardHash *pBoardHash, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    FILE *pFile = openBoardHistoryFile(pBoardHash, color, "r");
+    if (pFile == NULL) {
+        printf("Error opening board history file!\n");
+        return;
+    }
+
+    printf("\nReading board history from file\n");
+    fread(pBoardHistory, sizeof(BoardHistoryMovesForColor), 1, pFile);
+    printf("\nBoard history read from file\n");
+    fclose(pFile);
+    printf("\nBoard history file closed\n");
+}
+
+void writeBoardHistoryToDisk(BoardHash *pBoardHash, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    FILE *pFile = openBoardHistoryFile(pBoardHash, color, "w");
+    if (pFile == NULL) {
+        printf("Error opening board history file!\n");
+        return;
+    }
+    printf("\nWriting board history to file\n");
+    fwrite(pBoardHistory, sizeof(BoardHistoryMovesForColor), 1, pFile);
+    printf("\nBoard history written to file\n");
+    fclose(pFile);
+    printf("\nBoard history file closed\n");
+}
+
+void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nGetting board history\n");
+    BoardHash boardHash;
+    getBoardHash(pBoard, &boardHash);
+    getBoardHistoryFromDisk(&boardHash, color, pBoardHistory);
+}
+
+void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nWriting board history\n");
+    BoardHash boardHash;
+    getBoardHash(pBoard, &boardHash);
+    writeBoardHistoryToDisk(&boardHash, color, pBoardHistory);
+}
 
 void copyBoard(Board source, Board destination) {
     memcpy(destination, source, sizeof(Board));
@@ -330,7 +462,7 @@ char exploreNextMovesForColor(MoveHistory current, int depth) {
     } 
 
     if(depth >= MAX_EXPLORE_DEPTH) {
-        return EMPTY;
+        return EMPTY; // No winner found
     }
 
     char nextColor = getNextColor(current.color);
@@ -338,7 +470,7 @@ char exploreNextMovesForColor(MoveHistory current, int depth) {
     getPossibleMovesForColor(*current.pBoardAfterMove, nextColor, possibleMoves);
 
     char nextMovesCount = 0;
-    for(char pieceIndex = 0; pieceIndex < BOARD_SIZE; ++pieceIndex)
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
         exploreNextMovesForPosition(current, possibleMoves[pieceIndex], depth, nextMovesCount, nextColor);
     }
@@ -349,16 +481,72 @@ char exploreNextMovesForColor(MoveHistory current, int depth) {
 }
 
 void guessBestMove(Board *pBoard, char color) {
-    MoveHistory initialMoveHistory = {
-        .pBoardAfterMove = pBoard,
-        .color = color,
-        .win_count = 0,
-        .game_count = 0,
-    };
+    printf("\nGuessing best move for color %c\n", color);
+    printBoard(*pBoard);
+    BoardHistoryMovesForColor boardHistory;
 
-    exploreNextMovesForColor(initialMoveHistory, 0);
+    PossibleMoves possibleMoves;
+    getPossibleMovesForColor(*pBoard, color, possibleMoves);
+
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
+    {
+        char x = possibleMoves[pieceIndex][0];
+        char y = possibleMoves[pieceIndex][1];
+
+        printf("\nPiece %d: (x%d,y%d)\n", pieceIndex, x, y);
+
+        char possibleMovesCount = 0;
+        char i = POSITION_LENGHT; // Skip index for origin possition
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[pieceIndex][i] != EMPTY) {
+            char toX = possibleMoves[pieceIndex][i];
+            char toY = possibleMoves[pieceIndex][i + 1];
+            i += POSITION_LENGHT;
+
+            printf("\tPossible move %d: (x%d,y%d)\n", possibleMovesCount, toX, toY);
+
+            BoardHistoryMove boardHistoryMove = {
+                .from = getPositionFromCoordinates(x, y),
+                .to = getPositionFromCoordinates(toX, toY),
+                .win_count = 0,
+                .game_count = 0,
+            };
+
+            printf("\tBoard history move: from %d to %d\n", boardHistoryMove.from, boardHistoryMove.to);
+
+            boardHistory[pieceIndex][possibleMovesCount] = boardHistoryMove;
+            possibleMovesCount++;
+        }
+        printf("\n -------------------\n");
+    }
+
+    printf("\nWriting board history\n");
+    writeBoardHistory(pBoard, color, &boardHistory);
+    printf("\nBoard history written\n");
+    printf("\nReading board history\n");
+    getBoardHistory(pBoard, color, &boardHistory);
+    printf("\nBoard history read\n");
+    // MoveHistory initialMoveHistory = {
+    //     .pBoardAfterMove = pBoard,
+    //     .color = color,
+    //     .win_count = 0,
+    //     .game_count = 0,
+    // };
+
+    // exploreNextMovesForColor(initialMoveHistory, 0);
 
     // TODO: Find bext next move
+}
+
+void aiVsAi() {
+    Board board;
+    initializeBoard(board);
+    printBoard(board);
+
+    char turn = WHITE;
+    // while(getWinner(board) == EMPTY) {
+        guessBestMove(&board, turn);
+    //    turn = getNextColor(turn);
+    //}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -381,7 +569,7 @@ void printBoard(Board board) {
 
         for(char x = 0; x < BOARD_SIZE; ++x)
         {
-            printf(" %c ", getPosition(x, y, board));
+            printf(" %c ", getPositionValue(x, y, board));
         }
 
         printf("y%d \n", y);
@@ -415,7 +603,7 @@ void printPossibleMovesForPiece(PossibleMovesForPosition possibleMoves) {
 void printPossibleMoves(PossibleMoves possibleMoves) {
     printf("\nPossible moves:\n");
 
-    for(char i = 0; i < BOARD_SIZE; ++i)
+    for(char i = 0; i < TOTAL_PIECES_PER_COLOR; ++i)
     {
         printPossibleMovesForPiece(possibleMoves[i]);
     }
@@ -449,7 +637,7 @@ int askForMove(Board board, char color) {
     char fromX = askForMoveI("from x"); 
     char fromY = askForMoveI("from y");
 
-    if(getPosition(fromX, fromY, board) != color) {
+    if(getPositionValue(fromX, fromY, board) != color) {
         printf("\n Error: Not your piece at %dx,%dy\n", fromX, fromY);
         return 0;
     }
@@ -457,7 +645,7 @@ int askForMove(Board board, char color) {
     char toX = askForMoveI("to x"); 
     char toY = askForMoveI("to y");
     
-    if(getPosition(toX, toY, board) != EMPTY) {
+    if(getPositionValue(toX, toY, board) != EMPTY) {
         printf("\n Error: To position not empty at %dx,%dy\n", toX, toY);
         return 0;
     }
@@ -487,6 +675,7 @@ int main() {
         printf("'m' move\n");
         printf("'h' help with possible moves\n");
         printf("'g' guess best move\n");
+        printf("'a' ai vs ai\n");
         printf("'b' board\n");
         printf("'e' exit\n");
 
@@ -495,6 +684,10 @@ int main() {
         
         switch (answer)
         {
+            case 'a':
+                aiVsAi();
+                break;
+
             case 'b':
                 printBoard(board);
                 break;
