@@ -390,14 +390,14 @@ void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMoves
         char toY = (*pPossibleMovesForPosition)[i + 1];
         i += POSITION_LENGHT;
 
-        printf("\tPossible move %d: (x%d,y%d)\n", pHistoryMovesForPiece->moveCount, toX, toY);
+        // printf("\tPossible move %d: (x%d,y%d)\n", pHistoryMovesForPiece->moveCount, toX, toY);
 
         initializeBoardHistoryMoveTo(
             getPositionFromCoordinates(toX, toY),
             &(pHistoryMovesForPiece->tos[pHistoryMovesForPiece->moveCount])
         );
 
-        printf("\tBoard history move: from %d to %d\n", pHistoryMovesForPiece->from, pHistoryMovesForPiece->tos[pHistoryMovesForPiece->moveCount].to);
+        // printf("\tBoard history move: from %d to %d\n", pHistoryMovesForPiece->from, pHistoryMovesForPiece->tos[pHistoryMovesForPiece->moveCount].to);
         pHistoryMovesForPiece->moveCount++;
     }
 }
@@ -412,13 +412,8 @@ void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistory
     {
         initializeBoardHistoryMoveForPiece(&possibleMoves[pieceIndex], &((*pBoardHistory)[pieceIndex]));
 
-        printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
-        printf("\n -------------------\n");
-    }
-
-    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
-    {
-        printf("\nPiece %d: Move count: %d\n", pieceIndex, (*pBoardHistory)[pieceIndex].moveCount);
+        // printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
+        // printf("\n -------------------\n");
     }
 }
 
