@@ -292,6 +292,44 @@ Position getPositionFromCoordinates(char x, char y) {
 
 typedef Position BoardHash[TOTAL_PIECES];
 
+// First 8 chars for white pieces
+// Next 8 chars for black pieces
+// Last char for null terminator
+typedef char BoardFileName[TOTAL_PIECES + 1];
+typedef char BoardFileNameFullPath[29];
+
+// We can only use valid characters in file names
+// We will sum the position index with this value to get a valid character
+const char FILE_NAME_CHAR_START = 48;
+
+void getBoardFileName(Board *pBoard, BoardFileName *pFileName) {
+    printf("\nGetting board file name\n");
+
+    char positionIndex = 0;
+    char whiteCount = 0;
+    char blackCount = 0;
+    for(char x = 0; x < BOARD_SIZE; ++x)
+    {
+        for(char y = 0; y < BOARD_SIZE; ++y)
+        {
+            char piece = getPositionValue(x, y, *pBoard);
+            switch(piece) {
+                case WHITE:
+                    (*pFileName)[whiteCount] = positionIndex + FILE_NAME_CHAR_START;
+                    whiteCount++;
+                    break;
+                case BLACK:
+                    (*pFileName)[blackCount + TOTAL_PIECES_PER_COLOR] = positionIndex + FILE_NAME_CHAR_START;
+                    blackCount++;
+                    break;
+            }
+            positionIndex++;
+        }
+    }
+    (*pFileName)[TOTAL_PIECES] = '\0';
+    printf("\nBoard file name: %s\n", *pFileName);
+}
+
 void getBoardHash(Board *pBoard, BoardHash *pHash) {
     printf("\nGetting board hash\n");
     Position position = 0;
@@ -375,29 +413,22 @@ void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistory
     }
 }
 
-FILE *openBoardHistoryFile(BoardHash *pBoardHash, char color, const char * __restrict __mode) {
-    printf("\nsizeof(BoardHistoryMovesForColor) %zu\n", sizeof(BoardHistoryMovesForColor));
+FILE *openBoardHistoryFile(Board *pBoard, char color, const char * __restrict __mode) {
+    BoardFileName fileName;
+    getBoardFileName(pBoard, &fileName);
 
-    printf("\nOpening board history file\n");
-    // 21 chars from fixed file name
-    // 16 chars for hash
-    // 1 char for color
-    // 21 + 16 + 1 = 38
-    char boardHistoryFileName[100];
-    // sprintf(boardHistoryFileName, "../db/%s_%c.bin", *pBoardHash, color);
+    printf("\nCreating file name full path\n");
+    BoardFileNameFullPath fileNameFullPath;
 
-    sprintf(boardHistoryFileName, "../db/%c.bin", color);
-    printf("\nOpening board history file: %s\n", boardHistoryFileName);
-    return fopen(boardHistoryFileName, __mode);
-    // FILE *f = fopen("c.bin", __mode);
-    // printf("\nBoard history file opened %p \n", f);
-    // return f;
+    sprintf(fileNameFullPath, "../db/%s_%c.bin", fileName, color);
+    printf("\nOpening board history file: %s\n", fileNameFullPath);
+    return fopen(fileNameFullPath, __mode);
 }
 
-Result getBoardHistoryFromDisk(BoardHash *pBoardHash, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    FILE *pFile = openBoardHistoryFile(pBoardHash, color, "r");
+Result getBoardHistoryFromDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    FILE *pFile = openBoardHistoryFile(pBoard, color, "r");
     if (pFile == NULL) {
-        printf("Error opening board history file!\n");
+        printf("Error opening board history file for read!\n");
         return ERROR;
     }
 
@@ -424,10 +455,10 @@ Result getBoardHistoryFromDisk(BoardHash *pBoardHash, char color, BoardHistoryMo
     return SUCCESS;
 }
 
-void writeBoardHistoryToDisk(BoardHash *pBoardHash, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    FILE *pFile = openBoardHistoryFile(pBoardHash, color, "w");
+void writeBoardHistoryToDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
+    FILE *pFile = openBoardHistoryFile(pBoard, color, "w");
     if (pFile == NULL) {
-        printf("Error opening board history file!\n");
+        printf("Error opening board history file for write!\n");
         return;
     }
     printf("\nWriting board history to file\n");
@@ -454,18 +485,14 @@ void writeBoardHistoryToDisk(BoardHash *pBoardHash, char color, BoardHistoryMove
 
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
     printf("\nGetting board history\n");
-    BoardHash boardHash;
-    getBoardHash(pBoard, &boardHash);
-    if(getBoardHistoryFromDisk(&boardHash, color, pBoardHistory) == ERROR) {
+    if(getBoardHistoryFromDisk(pBoard, color, pBoardHistory) == ERROR) {
         initializeBoardHistoryMovesForColor(pBoard, color, pBoardHistory);
     }
 }
 
 void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
     printf("\nWriting board history\n");
-    BoardHash boardHash;
-    getBoardHash(pBoard, &boardHash);
-    writeBoardHistoryToDisk(&boardHash, color, pBoardHistory);
+    writeBoardHistoryToDisk(pBoard, color, pBoardHistory);
 }
 
 void copyBoard(Board source, Board destination) {
