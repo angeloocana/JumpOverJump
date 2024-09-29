@@ -297,18 +297,18 @@ void getBoardHash(Board *pBoard, BoardHash *pHash) {
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
-            printf("\nPosition: %d\n", position);
+            // printf("\nPosition: %d\n", position);
             char piece = getPositionValue(x, y, *pBoard);
-            printf("\nPiece: %c\n", piece);
+            // printf("\nPiece: %c\n", piece);
             switch(piece) {
                 case WHITE:
                     (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_WHITE;
-                    printf("\nWHITE: %d\n", (*pHash)[pieceCount]);
+                    // printf("\nWHITE: %d\n", (*pHash)[pieceCount]);
                     pieceCount++;
                     break;
                 case BLACK:
                     (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_BLACK;
-                    printf("\nBLACK: %d\n", (*pHash)[pieceCount]);
+                    // printf("\nBLACK: %d\n", (*pHash)[pieceCount]);
                     pieceCount++;
                     break;
             }
@@ -320,8 +320,8 @@ void getBoardHash(Board *pBoard, BoardHash *pHash) {
 
 typedef struct BoardHistoryMoveTo {
     Position to;
-    unsigned long long win_count;
-    unsigned long long game_count;
+    unsigned int win_count;
+    unsigned int game_count;
 } BoardHistoryMoveTo;
 
 typedef struct BoardHistoryMovesForPiece {
@@ -359,7 +359,22 @@ void getBoardHistoryFromDisk(BoardHash *pBoardHash, char color, BoardHistoryMove
     }
 
     printf("\nReading board history from file\n");
-    fread(pBoardHistory, sizeof(BoardHistoryMovesForColor), 1, pFile);
+
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
+    {
+        printf("\nReading pieceIndex %d\n", pieceIndex);
+        BoardHistoryMovesForPiece historyMovesForPiece = (*pBoardHistory)[pieceIndex];
+
+        historyMovesForPiece.moveCount = fgetc(pFile);
+        printf("\nRead moveCount %d\n", historyMovesForPiece.moveCount);
+
+        historyMovesForPiece.from = fgetc(pFile);
+        printf("\nRead historyMovesForPiece.from %d\n", historyMovesForPiece.from);
+        
+        fread(historyMovesForPiece.tos, sizeof(BoardHistoryMoveTo), historyMovesForPiece.moveCount, pFile);
+        printf("\nRead historyMovesForPiece.tos\n");
+    }
+
     printf("\nBoard history read from file\n");
     fclose(pFile);
     printf("\nBoard history file closed\n");
@@ -372,7 +387,22 @@ void writeBoardHistoryToDisk(BoardHash *pBoardHash, char color, BoardHistoryMove
         return;
     }
     printf("\nWriting board history to file\n");
-    fwrite(pBoardHistory, sizeof(BoardHistoryMovesForColor), 1, pFile);
+
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
+    {
+        printf("\nWriting pieceIndex %d\n", pieceIndex);
+        BoardHistoryMovesForPiece historyMovesForPiece = (*pBoardHistory)[pieceIndex];
+
+        printf("\nWriting moveCount %d\n", historyMovesForPiece.moveCount);
+        fputc(historyMovesForPiece.moveCount, pFile);
+
+        printf("\nWriting historyMovesForPiece.from %d\n", historyMovesForPiece.from);
+        fputc(historyMovesForPiece.from, pFile);
+
+        printf("\nWriting historyMovesForPiece.tos\n");
+        fwrite(historyMovesForPiece.tos, sizeof(BoardHistoryMoveTo), historyMovesForPiece.moveCount, pFile);
+    }
+
     printf("\nBoard history written to file\n");
     fclose(pFile);
     printf("\nBoard history file closed\n");
@@ -508,7 +538,7 @@ void guessBestMove(Board *pBoard, char color) {
         };
 
         char i = POSITION_LENGHT; // Skip index for origin possition
-        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH) {
+        while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMoves[pieceIndex][i] != EMPTY) {
             char toX = possibleMoves[pieceIndex][i];
             char toY = possibleMoves[pieceIndex][i + 1];
             i += POSITION_LENGHT;
@@ -527,6 +557,7 @@ void guessBestMove(Board *pBoard, char color) {
             historyMovesForPiece.moveCount++;
         }
 
+        printf("\nMove count: %d\n", historyMovesForPiece.moveCount);
         boardHistory[pieceIndex] = historyMovesForPiece;
         printf("\n -------------------\n");
     }
