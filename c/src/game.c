@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include <string.h> // Add this at the top of the file with other includes
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -56,6 +58,26 @@ const char addForNexPositions[8][2] = {
     {0, -1}, // Bottom
     {1, -1}, // Bottom right
 };
+
+typedef struct Coordinates {
+    char x;
+    char y;
+} Coordinates;
+
+typedef struct Move {
+    Coordinates from;
+    Coordinates to;
+} Move;
+
+void printBoard(Board board);
+void printMove(Move *pMove);
+
+void copyMove(Move *pSource, Move *pDestination) {
+    pDestination->from.x = pSource->from.x;
+    pDestination->from.y = pSource->from.y;
+    pDestination->to.x = pSource->to.x;
+    pDestination->to.y = pSource->to.y;
+}
 
 void setPosition(char x, char y, char value, Board board) {
     board[x][y] = value;
@@ -252,7 +274,7 @@ int isValidMove(char fromX, char fromY, char toX, char toY, Board board) {
     return 0;
 }
 
-void move(char fromX, char fromY, char toX, char toY, Board board) {
+void applyMoveToBoard(char fromX, char fromY, char toX, char toY, Board board) {
     setPosition(toX, toY, getPositionValue(fromX, fromY, board), board);
     setPosition(fromX, fromY, EMPTY, board);
 }
@@ -290,9 +312,9 @@ Position getPositionFromCoordinates(char x, char y) {
     return (x * BOARD_SIZE) + y;
 }
 
-void getCoordinatesFromPosition(Position position, char *pX, char *pY) {
-    *pX = position / BOARD_SIZE;
-    *pY = position % BOARD_SIZE;
+void getCoordinatesFromPosition(Position *pPosition, char *pX, char *pY) {
+    *pX = *pPosition / BOARD_SIZE;
+    *pY = *pPosition % BOARD_SIZE;
 }
 
 typedef Position BoardHash[TOTAL_PIECES];
@@ -408,7 +430,7 @@ void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMoves
 }
 
 void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nInitializing board history moves for color %c\n", color);
+    // printf("\nInitializing board history moves for color %c\n", color);
 
     PossibleMoves possibleMoves;
     getPossibleMovesForColor(*pBoard, color, possibleMoves);
@@ -497,7 +519,7 @@ void writeBoardHistoryToDisk(Board *pBoard, char color, BoardHistoryMovesForColo
 }
 
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nGetting board history\n");
+    // printf("\nGetting board history\n");
     if(getBoardHistoryFromDisk(pBoard, color, pBoardHistory) == ERROR) {
         initializeBoardHistoryMovesForColor(pBoard, color, pBoardHistory);
     }
@@ -518,8 +540,6 @@ char getNextColor(char color) {
 
 char MAX_EXPLORE_DEPTH = 5;
 char MAX_EXPLORE_NEXT_POSITIONS = 2;
-
-void printBoard(Board board); // TODO: Removel after debuging
 
 char exploreNextMovesForColor(MoveHistory current, int depth);
 
@@ -551,7 +571,7 @@ void exploreNextMovesForPosition(MoveHistory current, PossibleMovesForPosition p
 
         Board boardAfterMove;
         copyBoard(*current.pBoardAfterMove, boardAfterMove);
-        move(x, y, toX, toY, boardAfterMove);
+        applyMoveToBoard(x, y, toX, toY, boardAfterMove);
 
         MoveHistory nextMoveHistory = {
             .fromX = x,
@@ -615,63 +635,90 @@ const unsigned int MAX_SCORE = 100000000;
 typedef unsigned int Score;
 
 typedef struct MoveScore {
-    char fromX;
-    char fromY;
-    char toX;
-    char toY;
+    Move move;
     Score score;
 } MoveScore;
 
-void guessBestMove(Board *pBoard, char color) {
+void initializeMoveScore(Board *pBoard, char color, Position *pFrom, Position *pTo, MoveScore *pMoveScore) {
+    getCoordinatesFromPosition(
+        pFrom, 
+        &(pMoveScore->move.from.x),
+        &(pMoveScore->move.from.y)
+    );
+
+    getCoordinatesFromPosition(
+        pTo, 
+        &(pMoveScore->move.to.x), 
+        &(pMoveScore->move.to.y)
+    );
+
+    Board boardAfterMove;
+    copyBoard(*pBoard, boardAfterMove);
+    applyMoveToBoard(
+        pMoveScore->move.from.x, 
+        pMoveScore->move.from.y, 
+        pMoveScore->move.to.x, 
+        pMoveScore->move.to.y, 
+        boardAfterMove
+    );
+
+    char winner = getWinner(boardAfterMove);
+    if(winner == color) {
+        pMoveScore->score = MAX_SCORE;
+    } else {
+        pMoveScore->score = getNRowsToWin(color, pMoveScore->move.to.y);
+    }
+}
+
+Score generateRandomScore(Score maxScore) {
+    srand(time(NULL));
+    return rand() % (maxScore + 1);
+}
+
+void guessBestMove(Board *pBoard, char color, Move *pMove) {
     printf("\nGuessing best move for color %c\n", color);
-    printBoard(*pBoard);
     BoardHistoryMovesForColor boardHistory;
     getBoardHistory(pBoard, color, &boardHistory);
 
     char movesCount = 0;
+    Score totalScore = 0;
     MoveScore movesScore[TOTAL_PIECES_PER_COLOR];
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
         for(char moveIndex = 0; moveIndex < boardHistory[pieceIndex].moveCount; ++moveIndex){
-            getCoordinatesFromPosition(
-                boardHistory[pieceIndex].from, 
-                &(movesScore[movesCount].fromX), 
-                &(movesScore[movesCount].fromY)
+            initializeMoveScore(
+                pBoard,
+                color,
+                &(boardHistory[pieceIndex].from), 
+                &(boardHistory[pieceIndex].tos[moveIndex].to), 
+                &(movesScore[movesCount])
             );
 
-            getCoordinatesFromPosition(
-                boardHistory[pieceIndex].tos[moveIndex].to, 
-                &(movesScore[movesCount].toX), 
-                &(movesScore[movesCount].toY)
-            );
-
-            Board boardAfterMove;
-            copyBoard(*pBoard, boardAfterMove);
-            move(
-                movesScore[movesCount].fromX, 
-                movesScore[movesCount].fromY, 
-                movesScore[movesCount].toX, 
-                movesScore[movesCount].toY, 
-                boardAfterMove
-            );
-
-            char winner = getWinner(boardAfterMove);
-            if(winner == color) {
-                movesScore[movesCount].score = MAX_SCORE;
-            } else {
-                movesScore[movesCount].score = getNRowsToWin(color, movesScore[movesCount].toY);
-            }
-
-            // printf("\nMove: %dx,%dy to %dx,%dy\n", movesScore[movesCount].fromX, movesScore[movesCount].fromY, movesScore[movesCount].toX, movesScore[movesCount].toY);
+            // printMove(&(movesScore[movesCount].move));
             // printf("\nMove score: %d\n\n", movesScore[movesCount].score);
-            
+            totalScore += movesScore[movesCount].score;
             movesCount++;
         }
     }
+
+    // Generate a random number between 0 and totalScore
+    Score randomScore = generateRandomScore(totalScore);
+    // printf("\nTotal score: %d\n", totalScore);
+    // printf("\nRandom score: %d\n", randomScore);
+    // printf("\nmovesCount: %d\n", movesCount);
+
+    Score cumulativeScore = 0;
+    char moveIndex = -1;
+    do {
+        moveIndex++;
+        cumulativeScore += movesScore[moveIndex].score;
+    } while(randomScore > cumulativeScore);
+
+    copyMove(&(movesScore[moveIndex].move), pMove);
 }
 
-const char AI_VS_AI_MAX_DEPTH = 1; // TOOD: Change to 45 after fixing writing files
+const char AI_VS_AI_MAX_DEPTH = 45; // TODO: Change to 45
 
 void aiVsAi() {
     Board board;
@@ -684,7 +731,13 @@ void aiVsAi() {
     while(winner == EMPTY && depth < AI_VS_AI_MAX_DEPTH) {
         turn = getNextColor(turn);
 
-        guessBestMove(&board, turn);
+        Move move;
+        guessBestMove(&board, turn, &move);
+        printMove(&move);
+
+        applyMoveToBoard(move.from.x, move.from.y, move.to.x, move.to.y, board);
+        printBoard(board);
+
         winner = getWinner(board);
         depth++;
     }
@@ -728,6 +781,10 @@ void printBoard(Board board) {
         printf(" x%d", x);
     }
     printf("\n");
+}
+
+void printMove(Move *pMove) {
+    printf("\nMove: %dx,%dy to %dx,%dy\n", pMove->from.x, pMove->from.y, pMove->to.x, pMove->to.y);
 }
 
 void printPossibleMovesForPiece(PossibleMovesForPosition possibleMoves) {
@@ -801,7 +858,7 @@ int askForMove(Board board, char color) {
         return 0;
     }
 
-    move(fromX, fromY, toX, toY, board);
+    applyMoveToBoard(fromX, fromY, toX, toY, board);
     printBoard(board);
     return 1;
 }
@@ -813,6 +870,7 @@ int main() {
     Board board;
     initializeBoard(board);
     printBoard(board);
+    Move move;
 
     char exitGame = 0;
 
@@ -849,7 +907,7 @@ int main() {
                 break;
 
             case 'g':
-                guessBestMove(&board, turn);
+                guessBestMove(&board, turn, &move);
                 break;
 
             case 'e':
