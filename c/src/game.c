@@ -506,7 +506,7 @@ Result getBoardHistoryFromDisk(Board *pBoard, char color, BoardHistoryMovesForCo
 
     // printf("\nBoard history read from file\n");
     fclose(pFile);
-    printf("\nBoard history file closed\n");
+    // printf("\nBoard history file closed\n");
     return SUCCESS;
 }
 
@@ -661,10 +661,10 @@ typedef struct MoveScore {
     Score score;
 } MoveScore;
 
-void initializeMoveScore(Board *pBoard, char color, Position *pFrom, Position *pTo, MoveScore *pMoveScore) {
+void initializeMoveScore(Board *pBoard, char color, Position *pFrom, BoardHistoryMoveTo *pBoardHistoryMoveTo, MoveScore *pMoveScore) {
     getCoordinatesFromPosition(pFrom, &(pMoveScore->move.from));
 
-    getCoordinatesFromPosition(pTo, &(pMoveScore->move.to));
+    getCoordinatesFromPosition(&(pBoardHistoryMoveTo->to), &(pMoveScore->move.to));
 
     Board boardAfterMove;
     copyBoard(*pBoard, boardAfterMove);
@@ -674,7 +674,11 @@ void initializeMoveScore(Board *pBoard, char color, Position *pFrom, Position *p
     if(winner == color) {
         pMoveScore->score = MAX_SCORE;
     } else {
-        pMoveScore->score = getNRowsToWin(color, pMoveScore->move.to.y);
+        // TODO: Proper calculate MCTS score
+        int winRation = pBoardHistoryMoveTo->win_count / pBoardHistoryMoveTo->game_count;
+        char nRowsToWin = getNRowsToWin(color, pMoveScore->move.to.y);
+        Score score = (winRation*MAX_SCORE) + nRowsToWin;
+        pMoveScore->score = score > MAX_SCORE ? MAX_SCORE : score;
     }
 }
 
@@ -699,7 +703,7 @@ void guessBestMove(Board *pBoard, char color, Move *pMove) {
                 pBoard,
                 color,
                 &(boardHistory[pieceIndex].from), 
-                &(boardHistory[pieceIndex].tos[moveIndex].to), 
+                &(boardHistory[pieceIndex].tos[moveIndex]), 
                 &(movesScore[movesCount])
             );
 
@@ -773,9 +777,10 @@ void backPropagateBoardHistory(Moves *pMoves, char totalMoves, char winner) {
     printf("\nBoard history back propagated\n");
 }
 
-const char AI_VS_AI_MAX_MOVES = 45;
+const char AI_VS_AI_MAX_MOVES = 127; // TODO: Change to 45 when AI is improved
 
-void aiVsAi() {
+// Success means a winner was found
+Result aiVsAi() {
     Board board;
     initializeBoard(board);
 
@@ -799,6 +804,17 @@ void aiVsAi() {
 
     printf("\nWinner: %c\n", winner);
     backPropagateBoardHistory(&moves, moveIndex, winner);
+    return winner != EMPTY ? SUCCESS : ERROR;
+}
+
+void aiVsAiForNGames(char nGames) {
+    int winnerCount = 0;
+    for(char i = 0; i < nGames; ++i) {
+        if(aiVsAi()) {
+            winnerCount++;
+        }
+        printf("\nGame %d: Winner Count: %d\n", i, winnerCount);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -942,7 +958,7 @@ int main() {
         switch (answer)
         {
             case 'a':
-                aiVsAi();
+                aiVsAiForNGames(1);
                 break;
 
             case 'b':
