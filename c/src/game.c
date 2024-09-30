@@ -290,6 +290,11 @@ Position getPositionFromCoordinates(char x, char y) {
     return (x * BOARD_SIZE) + y;
 }
 
+void getCoordinatesFromPosition(Position position, char *pX, char *pY) {
+    *pX = position / BOARD_SIZE;
+    *pY = position % BOARD_SIZE;
+}
+
 typedef Position BoardHash[TOTAL_PIECES];
 
 // First 8 chars for white pieces
@@ -522,6 +527,13 @@ char isMovingForward(char fromX, char fromY, char toX, char toY, char color) {
     return color == WHITE ? toY < fromY : toY > fromY;
 }
 
+char getNRowsToWin(char color, char y) {
+    if(color == WHITE) {
+        return BOARD_SIZE - 1 - y;
+    }
+    return y;
+}
+
 void exploreNextMovesForPosition(MoveHistory current, PossibleMovesForPosition possibleMovesForPosition, int depth, char nextMovesCount, char nextColor) {
     char x = possibleMovesForPosition[0];
     char y = possibleMovesForPosition[1];
@@ -598,15 +610,65 @@ char exploreNextMovesForColor(MoveHistory current, int depth) {
     return EMPTY;
 }
 
+const unsigned int MAX_SCORE = 100000000;
+
+typedef unsigned int Score;
+
+typedef struct MoveScore {
+    char fromX;
+    char fromY;
+    char toX;
+    char toY;
+    Score score;
+} MoveScore;
+
 void guessBestMove(Board *pBoard, char color) {
     printf("\nGuessing best move for color %c\n", color);
     printBoard(*pBoard);
     BoardHistoryMovesForColor boardHistory;
     getBoardHistory(pBoard, color, &boardHistory);
 
-    writeBoardHistory(pBoard, color, &boardHistory);
+    char movesCount = 0;
+    MoveScore movesScore[TOTAL_PIECES_PER_COLOR];
 
-    getBoardHistory(pBoard, color, &boardHistory);
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
+    {
+        for(char moveIndex = 0; moveIndex < boardHistory[pieceIndex].moveCount; ++moveIndex){
+            getCoordinatesFromPosition(
+                boardHistory[pieceIndex].from, 
+                &(movesScore[movesCount].fromX), 
+                &(movesScore[movesCount].fromY)
+            );
+
+            getCoordinatesFromPosition(
+                boardHistory[pieceIndex].tos[moveIndex].to, 
+                &(movesScore[movesCount].toX), 
+                &(movesScore[movesCount].toY)
+            );
+
+            Board boardAfterMove;
+            copyBoard(*pBoard, boardAfterMove);
+            move(
+                movesScore[movesCount].fromX, 
+                movesScore[movesCount].fromY, 
+                movesScore[movesCount].toX, 
+                movesScore[movesCount].toY, 
+                boardAfterMove
+            );
+
+            char winner = getWinner(boardAfterMove);
+            if(winner == color) {
+                movesScore[movesCount].score = MAX_SCORE;
+            } else {
+                movesScore[movesCount].score = getNRowsToWin(color, movesScore[movesCount].toY);
+            }
+
+            // printf("\nMove: %dx,%dy to %dx,%dy\n", movesScore[movesCount].fromX, movesScore[movesCount].fromY, movesScore[movesCount].toX, movesScore[movesCount].toY);
+            // printf("\nMove score: %d\n\n", movesScore[movesCount].score);
+            
+            movesCount++;
+        }
+    }
 }
 
 const char AI_VS_AI_MAX_DEPTH = 1; // TOOD: Change to 45 after fixing writing files
@@ -626,6 +688,9 @@ void aiVsAi() {
         winner = getWinner(board);
         depth++;
     }
+
+    // TODO
+    // writeBoardHistory(pBoard, color, &boardHistory);
 
     printf("\nWinner: %c\n", winner);
 }
