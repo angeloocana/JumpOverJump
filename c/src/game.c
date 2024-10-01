@@ -7,6 +7,7 @@
 #include <libmemcached/memcached.h>
 #include <sys/stat.h> // TODO: Do I really need this?
 #include <errno.h> // TODO: Do I really need this?
+#include <pcg_variants.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -166,7 +167,7 @@ typedef struct MoveScore {
 } MoveScore;
 
 const char AI_VS_AI_MAX_MOVES = 100;
-const int AI_VS_AI_GAMES_COUNT = 1000;
+const int AI_VS_AI_GAMES_COUNT = 10000;
 
 // Core functions
 
@@ -914,8 +915,16 @@ void initializeMoveScore(Board *pBoard, char color, Position *pFrom, BoardHistor
     }
 }
 
-Score generateRandomScore(Score maxScore) {
-    return rand() % (maxScore + 1);
+// Declare a global PCG random number generator
+static pcg32_random_t rng;
+
+// Initialize the RNG (call this once at the start of your program)
+void initRNG() {
+    pcg32_srandom_r(&rng, time(NULL), (intptr_t)&rng);
+}
+
+Score generateRandomScore(Score max_score) {
+    return pcg32_boundedrand_r(&rng, max_score + 1);
 }
 
 void guessBestMove(Board *pBoard, char color, Move *pMove) {
@@ -952,7 +961,7 @@ void guessBestMove(Board *pBoard, char color, Move *pMove) {
 
     // Generate a random number between 0 and totalScore
     Score randomScore = generateRandomScore(totalScore);
-    // printf("Total score: %d |", totalScore);
+    // printf("\nTotal score: %d |", totalScore);
     // printf("Random score: %d\n", randomScore);
     // printf("\nmovesCount: %d\n", movesCount);
 
@@ -1058,8 +1067,8 @@ void aiVsAiForNGames() {
         }
         printf("\nGame %d: | Winner Count: %d | Winner ratio: %f", i, winnerCount, (float)winnerCount / (i + 1));
 
-        // struct timespec remaining, request = { 0, 1000 }; 
-        // nanosleep(&request, &remaining);
+        struct timespec remaining, request = { 0, 100000 }; 
+        nanosleep(&request, &remaining);
     }
 
     printf("\nCache keys %d not found | %d found | Percentage %.2f", cacheKeyNotFoundCount, cacheKeyFoundCount, (float)cacheKeyFoundCount / (cacheKeyFoundCount + cacheKeyNotFoundCount));
@@ -1206,7 +1215,8 @@ int main() {
     printBoard(&board);
     Move move;
 
-    srand(time(NULL));
+    // srand(time(NULL)); // Only needed for rand but I'm using pcg now
+    initRNG();
 
     char exitGame = 0;
 

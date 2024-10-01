@@ -20,9 +20,12 @@ Install memcached:
 Install libmemcached:
 https://github.com/awesomized/libmemcached?tab=readme-ov-file#from-source
 
+Install pcg:
+https://www.pcg-random.org/using-pcg-c.html
+
 ###Compile game:
 ```bash
-   clang ./src/game.c -o ./dist/game -I/usr/local/include -L/usr/local/lib -lmemcached -Wl,-rpath,/usr/local/lib
+   make
 ```
 
 ### Run game:
