@@ -156,7 +156,7 @@ typedef struct MoveScore {
 } MoveScore;
 
 const char AI_VS_AI_MAX_MOVES = 100;
-const int AI_VS_AI_GAMES_COUNT = 100;
+const int AI_VS_AI_GAMES_COUNT = 1;
 
 // Core functions
 
@@ -566,13 +566,17 @@ void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMove
     // printf("\nRead historyMovesForPiece->tos\n");
 }
 
+int filesNotFoundCount = 0;
+int filesFoundCount = 0;
+
 Result getBoardHistoryFromDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
     FILE *pFile = openBoardHistoryFile(pBoard, color, "r");
     if (pFile == NULL) {
         // printf("Error opening board history file for read!\n");
+        filesNotFoundCount++;
         return ERROR;
     }
-
+    filesFoundCount++;
     // printf("\nReading board history from file\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
@@ -909,6 +913,9 @@ Result aiVsAi() {
 }
 
 void aiVsAiForNGames() {
+    filesNotFoundCount = 0;
+    filesFoundCount = 0;
+
     int winnerCount = 0;
     for(int i = 0; i < AI_VS_AI_GAMES_COUNT; ++i) {
         if(aiVsAi()) {
@@ -916,6 +923,10 @@ void aiVsAiForNGames() {
         }
         printf("Game %d: | Winner Count: %d\n", i, winnerCount);
     }
+
+    printf("\nFiles not found count: %d\n", filesNotFoundCount);
+    printf("\nFiles found count: %d\n", filesFoundCount);
+    printf("\nPercentage of files found: %f\n", (float)filesFoundCount / (filesFoundCount + filesNotFoundCount));
 }
 
 /////////////////////////////////////////////////////////////////////////////////
