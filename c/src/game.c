@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <unistd.h> // TODO: Do I really need this?
+#include <libmemcached/memcached.h>
+#include <sys/stat.h> // TODO: Do I really need this?
+#include <errno.h> // TODO: Do I really need this?
 
 /////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -113,13 +117,19 @@ typedef struct MoveHistory {
     struct MoveHistory *pNextMoves[MAX_NEXT_POSITIONS];
 } MoveHistory;
 
-typedef Position BoardHash[TOTAL_PIECES];
+// +8 chars for white pieces
+// +8 chars for black pieces
+// +1 char for color
+// +1 char for null terminator
+typedef char BoardHash[TOTAL_PIECES + 2];
 
-// First 8 chars for white pieces
-// Next 8 chars for black pieces
-// Last char for null terminator
-typedef char BoardFileName[TOTAL_PIECES + 1];
-typedef char BoardFileNameFullPath[29];
+const char BOARD_HISTORY_DB_PATH[] = "/Users/angeloocanamartins/dev/JumpOverJump_db/";
+
+// +16 chars for pieces
+// +15 for folders
+// +50 for BOARD_HISTORY_DB_PATH
+// +1 for null terminator
+typedef char BoardFileNameFullPath[100]; // Add some extra space to avoid issues
 
 // We can only use valid characters in file names
 // We will sum the position index with this value to get a valid character
@@ -156,7 +166,7 @@ typedef struct MoveScore {
 } MoveScore;
 
 const char AI_VS_AI_MAX_MOVES = 100;
-const int AI_VS_AI_GAMES_COUNT = 1;
+const int AI_VS_AI_GAMES_COUNT = 1000;
 
 // Core functions
 
@@ -182,18 +192,45 @@ void applyMove(Move *pMove, Board *pBoard);
 Position getPositionFromXY(char x, char y);
 Position getPositionFromCoordinates(Coordinates *pCoordinates);
 void getCoordinatesFromPosition(Position *pPosition, Coordinates *pCoordinates);
-void getBoardFileName(Board *pBoard, BoardFileName *pFileName);
-void getBoardHash(Board *pBoard, BoardHash *pHash);
+void getBoardHash(Board *pBoard, char color, BoardHash *pHash);
 void initializeBoardHistoryMoveTo(Position to, BoardHistoryMoveTo *pBoardHistoryMoveTo);
 void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMovesForPosition, BoardHistoryMovesForPiece *pHistoryMovesForPiece);
 void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory);
-FILE *openBoardHistoryFile(Board *pBoard, char color, const char * __restrict __mode);
+
+// Cache
+
+int cacheKeyNotFoundCount = 0;
+int cacheKeyFoundCount = 0;
+
+memcached_return rc;
+memcached_st *memc;
+
+void setupMemcached();
+Result writeBoardHistoryToCache(char *key, BoardHistoryMovesForColor *pBoardHistory);
+Result getBoardHistoryFromCache(char *key, BoardHistoryMovesForColor *pBoardHistory);
+
+// Disk
+
+int filesNotFoundCount = 0;
+int filesFoundCount = 0;
+
+const char pathSeparator =
+#ifdef _WIN32
+  '\\';
+#else
+  '/';
+#endif
+
+void createFilePathDirs(char *file_path);
+void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFullPath);
 void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMovesForPiece, FILE *pFile);
-Result getBoardHistoryFromDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory);
+Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory);
 void writeBoardHistoryMovesForPieceToDisk(BoardHistoryMovesForPiece *pHistoryMovesForPiece, FILE *pFile);
-void writeBoardHistoryToDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory);
+void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory);
+
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory);
 void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory);
+
 void copyBoard(Board *pSource, Board *pDestination);
 char getNextColor(char color);
 
@@ -216,6 +253,10 @@ void printBoard(Board *pBoard);
 void printMove(Move *pMove);
 void printPossibleMovesForPiece(PossibleMovesForPosition *pPossibleMovesForPosition);
 void printPossibleMoves(PossibleMoves *pPossibleMoves);
+void printBoardHistory(BoardHistoryMovesForColor *pBoardHistory);
+
+// User interactive functions
+
 void helpWithPossibleMoves(Board *pBoard, char color);
 char askForMoveI(char i[]);
 int askForMove(Board *pBoard, char color);
@@ -442,10 +483,13 @@ void getCoordinatesFromPosition(Position *pPosition, Coordinates *pCoordinates) 
     pCoordinates->y = *pPosition % BOARD_SIZE;
 }
 
-void getBoardFileName(Board *pBoard, BoardFileName *pFileName) {
+void getBoardHash(Board *pBoard, char color, BoardHash *pHash) {
     char positionIndex = 0;
     char whiteCount = 0;
     char blackCount = 0;
+    char lastWhiteY = LAST_ROW_INDEX;
+    char lastBlackY = 0;
+    
     for(char x = 0; x < BOARD_SIZE; ++x)
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
@@ -453,48 +497,41 @@ void getBoardFileName(Board *pBoard, BoardFileName *pFileName) {
             char piece = getPositionValue(x, y, pBoard);
             switch(piece) {
                 case WHITE:
-                    (*pFileName)[whiteCount] = positionIndex + FILE_NAME_CHAR_START;
+                    (*pHash)[whiteCount] = positionIndex + FILE_NAME_CHAR_START;
                     whiteCount++;
+                    if(y < lastWhiteY) {
+                        lastWhiteY = y;
+                    }
                     break;
                 case BLACK:
-                    (*pFileName)[blackCount + TOTAL_PIECES_PER_COLOR] = positionIndex + FILE_NAME_CHAR_START;
+                    (*pHash)[blackCount + TOTAL_PIECES_PER_COLOR] = positionIndex + FILE_NAME_CHAR_START;
                     blackCount++;
+                    if(y > lastBlackY) {
+                        lastBlackY = y;
+                    }
                     break;
             }
             positionIndex++;
         }
     }
-    (*pFileName)[TOTAL_PIECES] = '\0';
-}
 
-void getBoardHash(Board *pBoard, BoardHash *pHash) {
-    printf("\nGetting board hash\n");
-    Position position = 0;
-    char pieceCount = 0;
-
-    for(char x = 0; x < BOARD_SIZE; ++x)
-    {
-        for(char y = 0; y < BOARD_SIZE; ++y)
-        {
-            // printf("\nPosition: %d\n", position);
-            char piece = getPositionValue(x, y, pBoard);
-            // printf("\nPiece: %c\n", piece);
-            switch(piece) {
-                case WHITE:
-                    (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_WHITE;
-                    // printf("\nWHITE: %d\n", (*pHash)[pieceCount]);
-                    pieceCount++;
-                    break;
-                case BLACK:
-                    (*pHash)[pieceCount] = position + POSITION_INCREMENT_FOR_BLACK;
-                    // printf("\nBLACK: %d\n", (*pHash)[pieceCount]);
-                    pieceCount++;
-                    break;
-            }
-            position++;
+    // printf("\nLast white y: %d | Last black y: %d\n", lastWhiteY, lastBlackY);
+    // printf("\nwhole file name: %s\n", *pFileName);
+    // Check if game is close to the end
+    // different colored pieces can't interact with each other anymore so we don't care about the other player pieces.
+    if(lastWhiteY - lastBlackY > 2) {
+        if (color == BLACK) {
+            memmove(*pHash, *pHash + TOTAL_PIECES_PER_COLOR, TOTAL_PIECES_PER_COLOR);
+            // printf("\nmemove name: %s\n", *pFileName);
         }
+
+        (*pHash)[TOTAL_PIECES_PER_COLOR] = color;
+        (*pHash)[TOTAL_PIECES_PER_COLOR + 1] = '\0';
+    } else {
+        char colorIndex = TOTAL_PIECES_PER_COLOR * 2;
+        (*pHash)[colorIndex] = color;
+        (*pHash)[colorIndex + 1] = '\0';
     }
-    printf("\nBoard hash: %s\n", *pHash);
 }
 
 void initializeBoardHistoryMoveTo(Position to, BoardHistoryMoveTo *pBoardHistoryMoveTo) {
@@ -543,16 +580,98 @@ void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistory
     }
 }
 
-FILE *openBoardHistoryFile(Board *pBoard, char color, const char * __restrict __mode) {
-    BoardFileName fileName;
-    getBoardFileName(pBoard, &fileName);
+/////////////////////////////////////////////////////////////////////////////////
+// Memcached
+/////////////////////////////////////////////////////////////////////////////////
 
-    // printf("\nCreating file name full path\n");
-    BoardFileNameFullPath fileNameFullPath;
+void setupMemcached() {
+    memcached_server_st *servers = NULL;
 
-    sprintf(fileNameFullPath, "../db/%s_%c.bin", fileName, color);
-    // printf("\nOpen: %s\n", fileNameFullPath);
-    return fopen(fileNameFullPath, __mode);
+    // TODO: Please note, when you write new application use memcached() over memcached_create().
+    // https://awesomized.github.io/libmemcached/libmemcached/memcached_create.html#description
+    memc = memcached_create(NULL);
+    servers = memcached_server_list_append(servers, "localhost", 11211, &rc);
+    rc = memcached_server_push(memc, servers);
+
+    if (rc == MEMCACHED_SUCCESS)
+        fprintf(stderr, "Memcached server added successfully\n");
+    else
+        fprintf(stderr, "Couldn't add memcached server: %s\n", memcached_strerror(memc, rc));
+}
+
+Result writeBoardHistoryToCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
+    rc = memcached_set(memc, key, strlen(key), (const char*)pBoardHistory, sizeof(BoardHistoryMovesForColor), (time_t)0, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL);
+
+    if (rc == MEMCACHED_SUCCESS) {
+        // fprintf(stderr, "Key stored successfully\n");
+        return SUCCESS;
+    }
+    
+    fprintf(stderr, "Couldn't store key: %s\n", memcached_strerror(memc, rc));
+    return ERROR;
+}
+
+Result getBoardHistoryFromCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
+    size_t value_length;
+    uint32_t flags;
+
+    char* retrieved_value = memcached_get(memc, key, strlen(key), &value_length, &flags, &rc);
+
+    if (rc == MEMCACHED_SUCCESS) {
+        // fprintf(stderr, "Key retrieved successfully\n");
+        // printf("The key '%s' returned value '%s'.\n", key, pBoardHistory);
+        // TODO: Write function to print BoardHistoryMovesForColor
+        memcpy(pBoardHistory, (BoardHistoryMovesForColor*)retrieved_value, sizeof(BoardHistoryMovesForColor));
+        free(retrieved_value);
+        cacheKeyFoundCount++;
+        // printBoardHistory(pBoardHistory);
+        return SUCCESS;
+    }
+    
+    cacheKeyNotFoundCount++;
+    // fprintf(stderr, "Couldn't retrieve key: %s\n", memcached_strerror(memc, rc));
+    return ERROR;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+// Disk
+/////////////////////////////////////////////////////////////////////////////////
+
+// Given a file path, create all constituent directories if missing
+void createFilePathDirs(char *file_path) {
+  char *dir_path = (char *) malloc(strlen(file_path) + 1);
+  char *next_sep = strchr(file_path, pathSeparator);
+  while (next_sep != NULL) {
+    int dir_path_len = next_sep - file_path;
+    memcpy(dir_path, file_path, dir_path_len);
+    dir_path[dir_path_len] = '\0';
+    mkdir(dir_path, S_IRWXU|S_IRWXG|S_IROTH);
+    next_sep = strchr(next_sep + 1, pathSeparator);
+  }
+  free(dir_path);
+}
+
+void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFullPath) {
+    // Write "../db/" to the start of fileNameFullPath
+    strcpy(*fileNameFullPath, BOARD_HISTORY_DB_PATH);
+    
+    // Creates a directory for each position, the goal is to reduce the number of files per directory
+    char iHash = 0;
+    char iFileNameFullPath = strlen(*fileNameFullPath);
+    do {
+        (*fileNameFullPath)[iFileNameFullPath] = (*hash)[iHash];
+        if ((*hash)[iHash + 1] != '\0') {
+            (*fileNameFullPath)[iFileNameFullPath + 1] = '/';
+            iFileNameFullPath += 2;
+        } else {
+            iFileNameFullPath++;
+        }
+        iHash++;
+    } while((*hash)[iHash] != '\0');
+
+    (*fileNameFullPath)[iFileNameFullPath] = '\0';
+    
+    // printf("\nOpen: %s\n", *fileNameFullPath);
 }
 
 void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMovesForPiece, FILE *pFile) {
@@ -566,11 +685,11 @@ void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMove
     // printf("\nRead historyMovesForPiece->tos\n");
 }
 
-int filesNotFoundCount = 0;
-int filesFoundCount = 0;
+Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
+    BoardFileNameFullPath fileNameFullPath;
+    getBoardFileNameFullPath(hash, &fileNameFullPath);
 
-Result getBoardHistoryFromDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    FILE *pFile = openBoardHistoryFile(pBoard, color, "r");
+    FILE *pFile = fopen(fileNameFullPath, "r");
     if (pFile == NULL) {
         // printf("Error opening board history file for read!\n");
         filesNotFoundCount++;
@@ -602,13 +721,18 @@ void writeBoardHistoryMovesForPieceToDisk(BoardHistoryMovesForPiece *pHistoryMov
     fwrite(pHistoryMovesForPiece->tos, sizeof(BoardHistoryMoveTo), pHistoryMovesForPiece->moveCount, pFile);
 }
 
-void writeBoardHistoryToDisk(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    FILE *pFile = openBoardHistoryFile(pBoard, color, "w");
+void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
+    BoardFileNameFullPath fileNameFullPath;
+    getBoardFileNameFullPath(hash, &fileNameFullPath);
+
+    createFilePathDirs(fileNameFullPath);
+
+    FILE *pFile = fopen(fileNameFullPath, "w");
     if (pFile == NULL) {
         // printf("Error opening board history file for write!\n");
         return;
     }
-    // printf("\nWriting board history to file\n");
+    // printf("\nWriting board history to disk\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -623,14 +747,25 @@ void writeBoardHistoryToDisk(Board *pBoard, char color, BoardHistoryMovesForColo
 
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
     // printf("\nGetting board history\n");
-    if(getBoardHistoryFromDisk(pBoard, color, pBoardHistory) == ERROR) {
+    BoardHash hash;
+    getBoardHash(pBoard, color, &hash);
+
+    if(getBoardHistoryFromCache(&(hash[0]), pBoardHistory) == SUCCESS) {
+        return;
+    }
+
+    if(getBoardHistoryFromDisk(&hash, pBoardHistory) == ERROR) {
         initializeBoardHistoryMovesForColor(pBoard, color, pBoardHistory);
     }
 }
 
 void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
     // printf("\nWriting board history\n");
-    writeBoardHistoryToDisk(pBoard, color, pBoardHistory);
+    BoardHash hash;
+    getBoardHash(pBoard, color, &hash);
+
+    writeBoardHistoryToCache(&(hash[0]), pBoardHistory);
+    writeBoardHistoryToDisk(&hash, pBoardHistory);
 }
 
 void copyBoard(Board *pSource, Board *pDestination) {
@@ -693,7 +828,6 @@ void exploreNextMovesForPosition(MoveHistory *pCurrent, PossibleMovesForPosition
 char exploreNextMovesForColor(MoveHistory *pCurrent, int depth) {
     char winner = getWinner(pCurrent->pBoardAfterMove);
 
-    printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     printf("\nExploring depth: %d\n", depth);
     printf("\nCurrent color: %c\n", pCurrent->color);
     printf("\nWinner: %c\n", winner);
@@ -781,7 +915,6 @@ void initializeMoveScore(Board *pBoard, char color, Position *pFrom, BoardHistor
 }
 
 Score generateRandomScore(Score maxScore) {
-    srand(time(NULL));
     return rand() % (maxScore + 1);
 }
 
@@ -819,8 +952,8 @@ void guessBestMove(Board *pBoard, char color, Move *pMove) {
 
     // Generate a random number between 0 and totalScore
     Score randomScore = generateRandomScore(totalScore);
-    // printf("\nTotal score: %d\n", totalScore);
-    // printf("\nRandom score: %d\n", randomScore);
+    // printf("Total score: %d |", totalScore);
+    // printf("Random score: %d\n", randomScore);
     // printf("\nmovesCount: %d\n", movesCount);
 
     Score cumulativeScore = 0;
@@ -905,14 +1038,16 @@ Result aiVsAi() {
         moveIndex++;
     }
 
-    printBoard(&board);
-    printf("\nWinner: %c | ", winner);
-    printf("Move index: %d | ", moveIndex);
+    // printBoard(&board);
+    // printf("\nWinner: %c | ", winner);
+    // printf("Move index: %d | ", moveIndex);
     backPropagateBoardHistory(&moves, moveIndex, winner);
     return winner != EMPTY ? SUCCESS : ERROR;
 }
 
 void aiVsAiForNGames() {
+    cacheKeyNotFoundCount = 0;
+    cacheKeyFoundCount = 0;
     filesNotFoundCount = 0;
     filesFoundCount = 0;
 
@@ -921,12 +1056,14 @@ void aiVsAiForNGames() {
         if(aiVsAi()) {
             winnerCount++;
         }
-        printf("Game %d: | Winner Count: %d\n", i, winnerCount);
+        printf("\nGame %d: | Winner Count: %d | Winner ratio: %f", i, winnerCount, (float)winnerCount / (i + 1));
+
+        // struct timespec remaining, request = { 0, 1000 }; 
+        // nanosleep(&request, &remaining);
     }
 
-    printf("\nFiles not found count: %d\n", filesNotFoundCount);
-    printf("\nFiles found count: %d\n", filesFoundCount);
-    printf("\nPercentage of files found: %f\n", (float)filesFoundCount / (filesFoundCount + filesNotFoundCount));
+    printf("\nCache keys %d not found | %d found | Percentage %.2f", cacheKeyNotFoundCount, cacheKeyFoundCount, (float)cacheKeyFoundCount / (cacheKeyFoundCount + cacheKeyNotFoundCount));
+    printf("\nFiles %d not found | %d found | Percentage %.2f\n", filesNotFoundCount, filesFoundCount, (float)filesFoundCount / (filesFoundCount + filesNotFoundCount));
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -993,6 +1130,16 @@ void printPossibleMoves(PossibleMoves *pPossibleMoves) {
     }
 }
 
+void printBoardHistory(BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nBoard history:\n");
+    for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex) {
+        printf("\nPiece %d:\n", pieceIndex);
+        for(char moveIndex = 0; moveIndex < (*pBoardHistory)[pieceIndex].moveCount; ++moveIndex) {
+            printf("Move %d: %d to %d | Win count: %d | Game count: %d\n", moveIndex, (*pBoardHistory)[pieceIndex].from, (*pBoardHistory)[pieceIndex].tos[moveIndex].to, (*pBoardHistory)[pieceIndex].tos[moveIndex].win_count, (*pBoardHistory)[pieceIndex].tos[moveIndex].game_count);
+        }
+    }
+}
+
 void helpWithPossibleMoves(Board *pBoard, char color) {
     PossibleMoves possibleMoves;
     getPossibleMovesForColor(pBoard, color, &possibleMoves);
@@ -1044,14 +1191,22 @@ int askForMove(Board *pBoard, char color) {
     return 1;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+// Main
+/////////////////////////////////////////////////////////////////////////////////
+
 int main() {
     printf("Welcome to Jump Over Jump!\n\n");
+
+    setupMemcached();
 
     char turn = WHITE;
     Board board;
     initializeBoard(&board);
     printBoard(&board);
     Move move;
+
+    srand(time(NULL));
 
     char exitGame = 0;
 
