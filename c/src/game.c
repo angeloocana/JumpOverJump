@@ -166,8 +166,8 @@ typedef struct MoveScore {
     Score score;
 } MoveScore;
 
-const char AI_VS_AI_MAX_MOVES = 100;
-const int AI_VS_AI_GAMES_COUNT = 10000;
+const char AI_VS_AI_MAX_MOVES = 50; // It should be 45 or less to win most of humans
+const int AI_VS_AI_GAMES_COUNT = 1000000;
 
 // Core functions
 
@@ -542,6 +542,8 @@ void initializeBoardHistoryMoveTo(Position to, BoardHistoryMoveTo *pBoardHistory
 }
 
 void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMovesForPosition, BoardHistoryMovesForPiece *pHistoryMovesForPiece) {
+    printf("\nInitializing board history move for piece\n");
+    printPossibleMovesForPiece(pPossibleMovesForPosition);
     char x = (*pPossibleMovesForPosition)[0];
     char y = (*pPossibleMovesForPosition)[1];
 
@@ -567,18 +569,20 @@ void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMoves
 }
 
 void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    // printf("\nInitializing board history moves for color %c\n", color);
+    printf("\nInitializing board history moves for color %c\n", color);
 
     PossibleMoves possibleMoves;
     getPossibleMovesForColor(pBoard, color, &possibleMoves);
+    printBoard(pBoard);
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
         initializeBoardHistoryMoveForPiece(&possibleMoves[pieceIndex], &((*pBoardHistory)[pieceIndex]));
 
-        // printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
-        // printf("\n -------------------\n");
+        printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
+        printf("\n -------------------\n");
     }
+    printf("\nBoard history moves for color initialized\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -601,10 +605,11 @@ void setupMemcached() {
 }
 
 Result writeBoardHistoryToCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nWriting board history to cache\n");
     rc = memcached_set(memc, key, strlen(key), (const char*)pBoardHistory, sizeof(BoardHistoryMovesForColor), (time_t)0, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL);
 
     if (rc == MEMCACHED_SUCCESS) {
-        // fprintf(stderr, "Key stored successfully\n");
+        fprintf(stderr, "Key stored successfully\n");
         return SUCCESS;
     }
     
@@ -613,24 +618,25 @@ Result writeBoardHistoryToCache(char *key, BoardHistoryMovesForColor *pBoardHist
 }
 
 Result getBoardHistoryFromCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nGetting board history from cache\n");
     size_t value_length;
     uint32_t flags;
 
     char* retrieved_value = memcached_get(memc, key, strlen(key), &value_length, &flags, &rc);
 
     if (rc == MEMCACHED_SUCCESS) {
-        // fprintf(stderr, "Key retrieved successfully\n");
+        fprintf(stderr, "Key retrieved successfully\n");
         // printf("The key '%s' returned value '%s'.\n", key, pBoardHistory);
         // TODO: Write function to print BoardHistoryMovesForColor
         memcpy(pBoardHistory, (BoardHistoryMovesForColor*)retrieved_value, sizeof(BoardHistoryMovesForColor));
         free(retrieved_value);
         cacheKeyFoundCount++;
-        // printBoardHistory(pBoardHistory);
+        printBoardHistory(pBoardHistory);
         return SUCCESS;
     }
     
     cacheKeyNotFoundCount++;
-    // fprintf(stderr, "Couldn't retrieve key: %s\n", memcached_strerror(memc, rc));
+    fprintf(stderr, "Couldn't retrieve key: %s\n", memcached_strerror(memc, rc));
     return ERROR;
 }
 
@@ -653,6 +659,7 @@ void createFilePathDirs(char *file_path) {
 }
 
 void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFullPath) {
+    printf("\nGetting board file name full path\n");
     // Write "../db/" to the start of fileNameFullPath
     strcpy(*fileNameFullPath, BOARD_HISTORY_DB_PATH);
     
@@ -672,7 +679,7 @@ void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFu
 
     (*fileNameFullPath)[iFileNameFullPath] = '\0';
     
-    // printf("\nOpen: %s\n", *fileNameFullPath);
+    printf("\nfileNameFullPath: %s\n", *fileNameFullPath);
 }
 
 void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMovesForPiece, FILE *pFile) {
@@ -687,17 +694,18 @@ void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMove
 }
 
 Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nGetting board history from disk\n");
     BoardFileNameFullPath fileNameFullPath;
     getBoardFileNameFullPath(hash, &fileNameFullPath);
 
     FILE *pFile = fopen(fileNameFullPath, "r");
     if (pFile == NULL) {
-        // printf("Error opening board history file for read!\n");
+        printf("Error opening board history file for read!\n");
         filesNotFoundCount++;
         return ERROR;
     }
     filesFoundCount++;
-    // printf("\nReading board history from file\n");
+    printf("\nReading board history from file\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -705,7 +713,7 @@ Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoar
         getBoardHistoryMovesForPieceFromDisk(&((*pBoardHistory)[pieceIndex]), pFile);
     }
 
-    // printf("\nBoard history read from file\n");
+    printf("\nBoard history read from file\n");
     fclose(pFile);
     // printf("\nBoard history file closed\n");
     return SUCCESS;
@@ -723,6 +731,7 @@ void writeBoardHistoryMovesForPieceToDisk(BoardHistoryMovesForPiece *pHistoryMov
 }
 
 void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
+    printf("\nWriting board history to disk\n");
     BoardFileNameFullPath fileNameFullPath;
     getBoardFileNameFullPath(hash, &fileNameFullPath);
 
@@ -730,10 +739,10 @@ void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardH
 
     FILE *pFile = fopen(fileNameFullPath, "w");
     if (pFile == NULL) {
-        // printf("Error opening board history file for write!\n");
+        printf("Error opening board history file for write!\n");
         return;
     }
-    // printf("\nWriting board history to disk\n");
+    printf("\nWriting board history to disk\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -741,13 +750,13 @@ void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardH
         writeBoardHistoryMovesForPieceToDisk(&((*pBoardHistory)[pieceIndex]), pFile);
     }
 
-    // printf("\nBoard history written to file\n");
+    printf("\nBoard history written to file\n");
     fclose(pFile);
     // printf("\nBoard history file closed\n");
 }
 
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    // printf("\nGetting board history\n");
+    printf("\nGetting board history\n");
     BoardHash hash;
     getBoardHash(pBoard, color, &hash);
 
@@ -761,7 +770,7 @@ void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoar
 }
 
 void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    // printf("\nWriting board history\n");
+    printf("\nWriting board history\n");
     BoardHash hash;
     getBoardHash(pBoard, color, &hash);
 
@@ -1047,9 +1056,9 @@ Result aiVsAi() {
         moveIndex++;
     }
 
-    // printBoard(&board);
-    // printf("\nWinner: %c | ", winner);
-    // printf("Move index: %d | ", moveIndex);
+    printBoard(&board);
+    printf("\nWinner: %c | ", winner);
+    printf("Move index: %d | ", moveIndex);
     backPropagateBoardHistory(&moves, moveIndex, winner);
     return winner != EMPTY ? SUCCESS : ERROR;
 }
@@ -1067,8 +1076,9 @@ void aiVsAiForNGames() {
         }
         printf("\nGame %d: | Winner Count: %d | Winner ratio: %f", i, winnerCount, (float)winnerCount / (i + 1));
 
-        struct timespec remaining, request = { 0, 100000 }; 
-        nanosleep(&request, &remaining);
+        // struct timespec remaining, request = { 0, 1000000000000 }; 
+        // nanosleep(&request, &remaining);
+        sleep(1);
     }
 
     printf("\nCache keys %d not found | %d found | Percentage %.2f", cacheKeyNotFoundCount, cacheKeyFoundCount, (float)cacheKeyFoundCount / (cacheKeyFoundCount + cacheKeyNotFoundCount));
