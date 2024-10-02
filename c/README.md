@@ -17,6 +17,19 @@ Install memcached:
    brew install memcached
 ```
 
+Change memcached item memory limit to 2bm (default is 64mb):
+Open `/opt/homebrew/opt/memcached/homebrew.mxcl.memcached.plist`
+Add this to ProgramArguments:
+```bash
+   <string>-m</string>
+   <string>2</string>
+```
+
+Start memcached:
+```bash
+   brew services start memcached
+```
+
 Install libmemcached:
 https://github.com/awesomized/libmemcached?tab=readme-ov-file#from-source
 
