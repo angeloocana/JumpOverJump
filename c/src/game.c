@@ -338,6 +338,13 @@ char getWinner(Board *pBoard) {
 }
 
 Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    if((*pPossibleMovesForPosition)[MAX_POSSIBLE_MOVES_ARRAY_LENGTH - 1] != EMPTY) {
+        // TODO: Add count logging to identify how often this happens
+        printf("\nAborting add position to possible moves, array is full\n");
+        printPossibleMovesForPiece(pPossibleMovesForPosition);
+        return ERROR; // Aborting array is full
+    }
+
     char i = POSITION_LENGHT; // skip origin position x,y
 
     while ((*pPossibleMovesForPosition)[i] != EMPTY) {
@@ -365,21 +372,29 @@ int isValidPosition(char x, char y) {
     return isValidIndex(x) && isValidIndex(y) ? 1 : 0;
 }
 
-void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
-    char nextX = x + addX;
-    char nextY = y + addY;
+int isValidAndEmptyPosition(char x, char y, Board *pBoard) {
+    return isValidPosition(x, y) && getPositionValue(x, y, pBoard) == EMPTY;
+}
 
-    if(isValidPosition(nextX, nextY) && getPositionValue(nextX, nextY, pBoard) != EMPTY) {
-        nextX = nextX + addX;
-        nextY = nextY + addY;
-        if(isValidPosition(nextX, nextY) && getPositionValue(nextX, nextY, pBoard) == EMPTY) {
-            if(addPositionToPossibleMoves(nextX, nextY, pPossibleMovesForPosition)){
-                for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
-                    char nextAddX = addForNexPositions[i][0];
-                    char nextAddY = addForNexPositions[i][1];
-                    addJumpsToPossibleMoves(nextX, nextAddX, nextY, nextAddY, pBoard, pPossibleMovesForPosition);
-                }
-            }
+void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    char overX = fromX + addX;
+    char overY = fromY + addY;
+    
+    if(!isValidAndEmptyPosition(overX, overY, pBoard)) {
+        return;
+    }
+
+    char toX = overX + addX;
+    char toY = overY + addY;
+    if(!isValidAndEmptyPosition(toX, toY, pBoard)) {
+        return;
+    }
+
+    if(addPositionToPossibleMoves(toX, toY, pPossibleMovesForPosition)){
+        for(char i = 0; i < MAX_NEXT_POSITIONS; i++) {
+            char toAddX = addForNexPositions[i][0];
+            char toAddY = addForNexPositions[i][1];
+            addJumpsToPossibleMoves(toX, toAddX, toY, toAddY, pBoard, pPossibleMovesForPosition);
         }
     }
 }
@@ -542,8 +557,8 @@ void initializeBoardHistoryMoveTo(Position to, BoardHistoryMoveTo *pBoardHistory
 }
 
 void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMovesForPosition, BoardHistoryMovesForPiece *pHistoryMovesForPiece) {
-    printf("\nInitializing board history move for piece\n");
-    printPossibleMovesForPiece(pPossibleMovesForPosition);
+    // printf("\nInitializing board history move for piece\n");
+    // printPossibleMovesForPiece(pPossibleMovesForPosition);
     char x = (*pPossibleMovesForPosition)[0];
     char y = (*pPossibleMovesForPosition)[1];
 
@@ -569,20 +584,20 @@ void initializeBoardHistoryMoveForPiece(PossibleMovesForPosition *pPossibleMoves
 }
 
 void initializeBoardHistoryMovesForColor(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nInitializing board history moves for color %c\n", color);
+    // printf("\nInitializing board history moves for color %c\n", color);
 
     PossibleMoves possibleMoves;
     getPossibleMovesForColor(pBoard, color, &possibleMoves);
-    printBoard(pBoard);
+    // printBoard(pBoard);
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
         initializeBoardHistoryMoveForPiece(&possibleMoves[pieceIndex], &((*pBoardHistory)[pieceIndex]));
 
-        printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
-        printf("\n -------------------\n");
+        // printf("\nMove count: %d\n", (*pBoardHistory)[pieceIndex].moveCount);
+        // printf("\n -------------------\n");
     }
-    printf("\nBoard history moves for color initialized\n");
+    // printf("\nBoard history moves for color initialized\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -605,38 +620,38 @@ void setupMemcached() {
 }
 
 Result writeBoardHistoryToCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nWriting board history to cache\n");
+    // printf("\nWriting board history to cache\n");
     rc = memcached_set(memc, key, strlen(key), (const char*)pBoardHistory, sizeof(BoardHistoryMovesForColor), (time_t)0, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL);
 
     if (rc == MEMCACHED_SUCCESS) {
-        fprintf(stderr, "Key stored successfully\n");
+        // fprintf(stderr, "Key stored successfully\n");
         return SUCCESS;
     }
     
-    fprintf(stderr, "Couldn't store key: %s\n", memcached_strerror(memc, rc));
+    // fprintf(stderr, "Couldn't store key: %s\n", memcached_strerror(memc, rc));
     return ERROR;
 }
 
 Result getBoardHistoryFromCache(char *key, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nGetting board history from cache\n");
+    // printf("\nGetting board history from cache\n");
     size_t value_length;
     uint32_t flags;
 
     char* retrieved_value = memcached_get(memc, key, strlen(key), &value_length, &flags, &rc);
 
     if (rc == MEMCACHED_SUCCESS) {
-        fprintf(stderr, "Key retrieved successfully\n");
+        // fprintf(stderr, "Key retrieved successfully\n");
         // printf("The key '%s' returned value '%s'.\n", key, pBoardHistory);
         // TODO: Write function to print BoardHistoryMovesForColor
         memcpy(pBoardHistory, (BoardHistoryMovesForColor*)retrieved_value, sizeof(BoardHistoryMovesForColor));
         free(retrieved_value);
         cacheKeyFoundCount++;
-        printBoardHistory(pBoardHistory);
+        // printBoardHistory(pBoardHistory);
         return SUCCESS;
     }
     
     cacheKeyNotFoundCount++;
-    fprintf(stderr, "Couldn't retrieve key: %s\n", memcached_strerror(memc, rc));
+    // fprintf(stderr, "Couldn't retrieve key: %s\n", memcached_strerror(memc, rc));
     return ERROR;
 }
 
@@ -659,7 +674,7 @@ void createFilePathDirs(char *file_path) {
 }
 
 void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFullPath) {
-    printf("\nGetting board file name full path\n");
+    // printf("\nGetting board file name full path\n");
     // Write "../db/" to the start of fileNameFullPath
     strcpy(*fileNameFullPath, BOARD_HISTORY_DB_PATH);
     
@@ -679,7 +694,7 @@ void getBoardFileNameFullPath(BoardHash *hash, BoardFileNameFullPath *fileNameFu
 
     (*fileNameFullPath)[iFileNameFullPath] = '\0';
     
-    printf("\nfileNameFullPath: %s\n", *fileNameFullPath);
+    // printf("\nfileNameFullPath: %s\n", *fileNameFullPath);
 }
 
 void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMovesForPiece, FILE *pFile) {
@@ -694,18 +709,18 @@ void getBoardHistoryMovesForPieceFromDisk(BoardHistoryMovesForPiece *historyMove
 }
 
 Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nGetting board history from disk\n");
+    // printf("\nGetting board history from disk\n");
     BoardFileNameFullPath fileNameFullPath;
     getBoardFileNameFullPath(hash, &fileNameFullPath);
 
     FILE *pFile = fopen(fileNameFullPath, "r");
     if (pFile == NULL) {
-        printf("Error opening board history file for read!\n");
+        // printf("Error opening board history file for read!\n");
         filesNotFoundCount++;
         return ERROR;
     }
     filesFoundCount++;
-    printf("\nReading board history from file\n");
+    // printf("\nReading board history from file\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -713,7 +728,7 @@ Result getBoardHistoryFromDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoar
         getBoardHistoryMovesForPieceFromDisk(&((*pBoardHistory)[pieceIndex]), pFile);
     }
 
-    printf("\nBoard history read from file\n");
+    // printf("\nBoard history read from file\n");
     fclose(pFile);
     // printf("\nBoard history file closed\n");
     return SUCCESS;
@@ -731,7 +746,7 @@ void writeBoardHistoryMovesForPieceToDisk(BoardHistoryMovesForPiece *pHistoryMov
 }
 
 void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nWriting board history to disk\n");
+    // printf("\nWriting board history to disk\n");
     BoardFileNameFullPath fileNameFullPath;
     getBoardFileNameFullPath(hash, &fileNameFullPath);
 
@@ -742,7 +757,7 @@ void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardH
         printf("Error opening board history file for write!\n");
         return;
     }
-    printf("\nWriting board history to disk\n");
+    // printf("\nWriting board history to disk\n");
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -750,13 +765,13 @@ void writeBoardHistoryToDisk(BoardHash *hash, BoardHistoryMovesForColor *pBoardH
         writeBoardHistoryMovesForPieceToDisk(&((*pBoardHistory)[pieceIndex]), pFile);
     }
 
-    printf("\nBoard history written to file\n");
+    // printf("\nBoard history written to file\n");
     fclose(pFile);
     // printf("\nBoard history file closed\n");
 }
 
 void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nGetting board history\n");
+    // printf("\nGetting board history\n");
     BoardHash hash;
     getBoardHash(pBoard, color, &hash);
 
@@ -770,7 +785,7 @@ void getBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoar
 }
 
 void writeBoardHistory(Board *pBoard, char color, BoardHistoryMovesForColor *pBoardHistory) {
-    printf("\nWriting board history\n");
+    // printf("\nWriting board history\n");
     BoardHash hash;
     getBoardHash(pBoard, color, &hash);
 
@@ -808,7 +823,7 @@ void exploreNextMovesForPosition(MoveHistory *pCurrent, PossibleMovesForPosition
         i += POSITION_LENGHT;
 
         if(!isMovingForward(x, y, toX, toY, pCurrent->color)) {
-            printf("\nNot moving forward from %dx,%dy to %dx,%dy\n", x, y, toX, toY);
+            // printf("\nNot moving forward from %dx,%dy to %dx,%dy\n", x, y, toX, toY);
             continue;
         }
 
@@ -1057,9 +1072,16 @@ Result aiVsAi() {
     }
 
     printBoard(&board);
-    printf("\nWinner: %c | ", winner);
-    printf("Move index: %d | ", moveIndex);
+
+    BoardHash hash;
+    getBoardHash(&board, turn, &hash);
+    
+    printf("\nHash: %s | ", hash);
+    printf("Winner: %c | ", winner);
+    printf("Move index: %d \n", moveIndex);
+    
     backPropagateBoardHistory(&moves, moveIndex, winner);
+    
     return winner != EMPTY ? SUCCESS : ERROR;
 }
 
@@ -1076,9 +1098,9 @@ void aiVsAiForNGames() {
         }
         printf("\nGame %d: | Winner Count: %d | Winner ratio: %f", i, winnerCount, (float)winnerCount / (i + 1));
 
-        // struct timespec remaining, request = { 0, 1000000000000 }; 
-        // nanosleep(&request, &remaining);
-        sleep(1);
+        struct timespec remaining, request = { 0, 10000000 }; 
+        nanosleep(&request, &remaining);
+        // sleep(1);
     }
 
     printf("\nCache keys %d not found | %d found | Percentage %.2f", cacheKeyNotFoundCount, cacheKeyFoundCount, (float)cacheKeyFoundCount / (cacheKeyFoundCount + cacheKeyNotFoundCount));
