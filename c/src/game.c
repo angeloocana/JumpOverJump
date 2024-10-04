@@ -190,14 +190,15 @@ void initializeBoard(Board *pBoard);
 void initializeGame(Game *pGame);
 char getWinner(Board *pBoard);
 char addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition);
-int isValidIndex(char i);
-int isValidPosition(char x, char y);
+static inline int isValidIndex(char i);
+static inline int isValidPosition(char x, char y);
 void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
 void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
 void getPossibleMovesForPosition(Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
 void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition);
 void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibleMoves);
-int isValidMove(char fromX, char fromY, char toX, char toY, Board *pBoard);
+Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, Board *pBoard);
+static inline Result isValidMove(Move *pMove, Board *pBoard);
 void applyMoveCoordinatesToBoard(char fromX, char fromY, char toX, char toY, Board *pBoard);
 void applyMoveToBoard(Move *pMove, Board *pBoard);
 void applyMoveToGame(Move *pMove, Game *pGame);
@@ -356,6 +357,7 @@ char getWinner(Board *pBoard) {
 }
 
 Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    // printf("\naddPositionToPossibleMoves (%d,%d)\n", x, y);
     if((*pPossibleMovesForPosition)[MAX_POSSIBLE_MOVES_ARRAY_LENGTH - 1] != EMPTY) {
         // TODO: Add count logging to identify how often this happens
         printf("\nAborting add position to possible moves, array is full\n");
@@ -370,6 +372,7 @@ Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPos
             x == (*pPossibleMovesForPosition)[i]
             && y == (*pPossibleMovesForPosition)[i + 1]
         ) {
+            // printf("\naddPositionToPossibleMoves position already added\n");
             return ERROR; // Aborting position already added
         }
 
@@ -379,32 +382,32 @@ Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPos
     (*pPossibleMovesForPosition)[i] = x;
     (*pPossibleMovesForPosition)[i + 1] = y;
 
+    // printf("\naddPositionToPossibleMoves position added\n");
     return SUCCESS;
 }
 
-int isValidIndex(char i) {
+static inline int isValidIndex(char i) {
     return i >= 0 && i < BOARD_SIZE ? 1 : 0;
 }
 
-int isValidPosition(char x, char y) {
+static inline int isValidPosition(char x, char y) {
     return isValidIndex(x) && isValidIndex(y) ? 1 : 0;
 }
 
-int isValidAndEmptyPosition(char x, char y, Board *pBoard) {
-    return isValidPosition(x, y) && getPositionValue(x, y, pBoard) == EMPTY;
-}
-
 void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    // printf("\naddJumpsToPossibleMoves from (%d,%d) add (%d,%d)\n", fromX, fromY, addX, addY);
     char overX = fromX + addX;
     char overY = fromY + addY;
     
-    if(!isValidAndEmptyPosition(overX, overY, pBoard)) {
+    if(!isValidPosition(overX, overY) || getPositionValue(overX, overY, pBoard) == EMPTY) {
+        // printf("\naddJumpsToPossibleMoves over (%d,%d) is not valid or empty\n", overX, overY);
         return;
     }
 
     char toX = overX + addX;
     char toY = overY + addY;
-    if(!isValidAndEmptyPosition(toX, toY, pBoard)) {
+    if(!isValidPosition(toX, toY) || getPositionValue(toX, toY, pBoard) != EMPTY) {
+        // printf("\naddJumpsToPossibleMoves to (%d,%d) is not valid or not empty\n", toX, toY);
         return;
     }
 
@@ -418,16 +421,20 @@ void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, Board
 }
 
 void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    // printf("\naddPositionToPossibleMovesIfValid from (%d,%d) add (%d,%d)\n", fromX, fromY, addX, addY);
     char x = fromX + addX;
     char y = fromY + addY;
 
     if (!isValidPosition(x, y)) {
+        // printf("\naddPositionToPossibleMovesIfValid position is not valid\n");
         return;
     }
 
     if(getPositionValue(x, y, pBoard) == EMPTY) {
+        // printf("\naddPositionToPossibleMovesIfValid position is empty (%d,%d)\n", x, y);
         addPositionToPossibleMoves(x, y, pPossibleMovesForPosition);
     } else {
+        // printf("\naddPositionToPossibleMovesIfValid position is not empty (%d,%d)\n", x, y);
         addJumpsToPossibleMoves(fromX, addX, fromY, addY, pBoard, pPossibleMovesForPosition);
     }
 }
@@ -436,6 +443,7 @@ void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char a
 // possibleMovesForPosition = [0, 0, 0, 1, 1, 1] 
 // (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
 void getPossibleMovesForPosition(Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+    // printf("\ngetPossibleMovesForPosition\n");
     char x = (*pPossibleMovesForPosition)[0];
     char y = (*pPossibleMovesForPosition)[1];
 
@@ -459,38 +467,47 @@ void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition
 }
 
 void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibleMoves) {
+    // printf("\ngetPossibleMovesForColor %c\n", color);
     char pieceCount = 0;
     for(char x = 0; x < BOARD_SIZE; ++x)
     {
         for(char y = 0; y < BOARD_SIZE; ++y)
         {
             if (getPositionValue(x, y, pBoard) == color) {
+                // printf("\n-------------------\n");
+                // printf("\ngetPossibleMovesForColor position (%d,%d) pieceCount %d\n", x, y, pieceCount);
                 initializePossibleMovesForPosition(x, y, &((*pPossibleMoves)[pieceCount]));
                 getPossibleMovesForPosition(pBoard, &((*pPossibleMoves)[pieceCount]));
+                // printf("\n-------------------\n\n");
                 pieceCount++;
             }
         }
     }
 }
 
-int isValidMove(char fromX, char fromY, char toX, char toY, Board *pBoard) {
+Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, Board *pBoard) {
     PossibleMovesForPosition possibleMovesForPosition;
     initializePossibleMovesForPosition(fromX, fromY, &possibleMovesForPosition);
     getPossibleMovesForPosition(pBoard, &possibleMovesForPosition);
 
+    printPossibleMovesForPiece(&possibleMovesForPosition);
     char i = POSITION_LENGHT; // Skip index for origin possition
     while(i < MAX_POSSIBLE_MOVES_ARRAY_LENGTH && possibleMovesForPosition[i] != EMPTY) {
         char x = possibleMovesForPosition[i];
         char y = possibleMovesForPosition[i + 1];
         
         if(x == toX && y == toY) {
-            return 1;
+            return SUCCESS;
         }
 
         i += POSITION_LENGHT;
     }
 
-    return 0;
+    return ERROR;
+}
+
+static inline Result isValidMove(Move *pMove, Board *pBoard) {
+    return isValidCoordinatesMove(pMove->from.x, pMove->from.y, pMove->to.x, pMove->to.y, pBoard);
 }
 
 // TODO: Remove later
@@ -1217,31 +1234,29 @@ char askForMoveI(char i[]) {
 }
 
 Result askForMove(Game *pGame) {
-    char fromX = askForMoveI("from x"); 
-    char fromY = askForMoveI("from y");
+    Move move;
+    move.from.x = askForMoveI("from x"); 
+    move.from.y = askForMoveI("from y");
 
-    if(getPositionValue(fromX, fromY, &(pGame->board)) != pGame->turn) {
-        printf("\n Error: Not your piece at %dx,%dy\n", fromX, fromY);
+    if(getCoordinatesValue(&(move.from), &(pGame->board)) != pGame->turn) {
+        printf("\n Error: Not your piece at %dx,%dy\n", move.from.x, move.from.y);
         return ERROR;
     }
 
-    char toX = askForMoveI("to x"); 
-    char toY = askForMoveI("to y");
+    move.to.x = askForMoveI("to x"); 
+    move.to.y = askForMoveI("to y");
     
-    if(getPositionValue(toX, toY, &(pGame->board)) != EMPTY) {
-        printf("\n Error: To position not empty at %dx,%dy\n", toX, toY);
+    if(getCoordinatesValue(&(move.to), &(pGame->board)) != EMPTY) {
+        printf("\n Error: To position not empty at %dx,%dy\n", move.to.x, move.to.y);
         return ERROR;
     }
 
-    if(!isValidMove(fromX, fromY, toX, toY, &(pGame->board))) {
-        printf("\n Error: Invalid move from %dx,%dy to %dx,%dy\n", fromX, fromY, toX, toY);
+    if(!isValidMove(&move, &(pGame->board))) {
+        printf("\n Error: Invalid move: ");
+        printMove(&move);
         return ERROR;
     }
 
-    Move move = {
-        .from = { .x = fromX, .y = fromY },
-        .to = { .x = toX, .y = toY },
-    };
     applyMoveToGame(&move, pGame);
     printBoard(&(pGame->board));
     return SUCCESS;
@@ -1268,13 +1283,19 @@ int main() {
     char exitGame = 0;
 
     while(exitGame == 0) {
+        if(game.winner != EMPTY || game.moveIndex >= MAX_MOVES) {
+            printf("\nGame finished! Winner: %c\n", game.winner);
+            backPropagateBoardHistory(&game);
+            break;
+        }
+
         printf("\nWhat would you like to do? Enter:\n");
         printf("'a' ai vs ai\n");
         printf("'b' board\n");
         printf("'h' help with possible moves\n");
         printf("'m' move\n");
         printf("'g' guess best move\n");
-        printf("'p' guess best move and apply\n");
+        printf("'p' play best move\n");
         printf("'e' exit\n");
 
         char answer = getchar();
