@@ -30,9 +30,8 @@ const char EMPTY = '_';
 // 8*8 = 64    BOARD_SIZE*BOARD_SIZE
 // 64/2 = 32   Piece can't change color when jumping
 // 32-1 = 31   Piece can't move to current position
-// TODO: Confirm right number. I'm guessing the max is 16 moves, 
-// with some quick tests the maximum I got were 15 moves.
-const char MAX_POSSIBLE_MOVES = 15;
+const char MAX_POSSIBLE_MOVES = 31; // TODO: Confirm right number
+char maxPossibleMovesFound = 0;
 
 const char POSITION_LENGHT = 2;
 const char MAX_POSSIBLE_MOVES_ARRAY_LENGTH = POSITION_LENGHT + (MAX_POSSIBLE_MOVES * POSITION_LENGHT);
@@ -161,7 +160,7 @@ typedef struct BoardHistoryMovesForPiece {
 
 typedef BoardHistoryMovesForPiece BoardHistoryMovesForColor[TOTAL_PIECES_PER_COLOR];
 
-const int AI_VS_AI_MAX_GAMES = 10;
+const int AI_VS_AI_MAX_GAMES = 500000;
 const char MAX_EXPLORE_DEPTH = 5;
 const char MAX_EXPLORE_NEXT_POSITIONS = 2;
 
@@ -358,13 +357,6 @@ char getWinner(Board *pBoard) {
 
 Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition) {
     // printf("\naddPositionToPossibleMoves (%d,%d)\n", x, y);
-    if((*pPossibleMovesForPosition)[MAX_POSSIBLE_MOVES_ARRAY_LENGTH - 1] != EMPTY) {
-        // TODO: Add count logging to identify how often this happens
-        printf("\nAborting add position to possible moves, array is full\n");
-        printPossibleMovesForPiece(pPossibleMovesForPosition);
-        return ERROR; // Aborting array is full
-    }
-
     char i = POSITION_LENGHT; // skip origin position x,y
 
     while ((*pPossibleMovesForPosition)[i] != EMPTY) {
@@ -377,10 +369,23 @@ Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPos
         }
 
         i += POSITION_LENGHT;
+
+        if(i >= MAX_POSSIBLE_MOVES_ARRAY_LENGTH) {
+            // TODO: Add count logging to identify how often this happens
+            printf("\nAborting add position (%d,%d) to possible moves, array is full\n", x, y);
+            printPossibleMovesForPiece(pPossibleMovesForPosition);
+            abort();
+            return ERROR; // Aborting array is full
+        }
     }
 
     (*pPossibleMovesForPosition)[i] = x;
     (*pPossibleMovesForPosition)[i + 1] = y;
+
+    char nPossibleMoves = (i - 1) / 2;
+    if(nPossibleMoves > maxPossibleMovesFound) {
+        maxPossibleMovesFound = nPossibleMoves;
+    }
 
     // printf("\naddPositionToPossibleMoves position added\n");
     return SUCCESS;
@@ -468,6 +473,7 @@ void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition
 
 void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibleMoves) {
     // printf("\ngetPossibleMovesForColor %c\n", color);
+    // printBoard(pBoard);
     char pieceCount = 0;
     for(char x = 0; x < BOARD_SIZE; ++x)
     {
@@ -1124,13 +1130,13 @@ void aiVsAiForNGames() {
         if(aiVsAi()) {
             winnerCount++;
         }
+        printf("\nMax possible moves found: %d\n", maxPossibleMovesFound);
         printf("\nGame %d: | Winner Count: %d | Winner ratio: %f", i, winnerCount, (float)winnerCount / (i + 1));
 
         // struct timespec remaining, request = { 0, 10000000 }; 
         // nanosleep(&request, &remaining);
         // sleep(1);
     }
-
     printf("\nCache keys %d not found | %d found | Percentage %.2f", cacheKeyNotFoundCount, cacheKeyFoundCount, (float)cacheKeyFoundCount / (cacheKeyFoundCount + cacheKeyNotFoundCount));
     printf("\nFiles %d not found | %d found | Percentage %.2f\n", filesNotFoundCount, filesFoundCount, (float)filesFoundCount / (filesFoundCount + filesNotFoundCount));
 }
