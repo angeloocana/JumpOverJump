@@ -30,7 +30,7 @@ const char EMPTY = '_';
 // 8*8 = 64    BOARD_SIZE*BOARD_SIZE
 // 64/2 = 32   Piece can't change color when jumping
 // 32-1 = 31   Piece can't move to current position
-const char MAX_POSSIBLE_MOVES = 31; // TODO: Confirm right number
+const char MAX_POSSIBLE_MOVES = 21;
 char maxPossibleMovesFound = 0;
 
 const char POSITION_LENGHT = 2;
@@ -160,7 +160,7 @@ typedef struct BoardHistoryMovesForPiece {
 
 typedef BoardHistoryMovesForPiece BoardHistoryMovesForColor[TOTAL_PIECES_PER_COLOR];
 
-const int AI_VS_AI_MAX_GAMES = 500000;
+const int AI_VS_AI_MAX_GAMES = 100000;
 const char MAX_EXPLORE_DEPTH = 5;
 const char MAX_EXPLORE_NEXT_POSITIONS = 2;
 
