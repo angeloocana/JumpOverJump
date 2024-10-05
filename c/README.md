@@ -53,8 +53,6 @@ Optimize the code:
 - Use a more efficient data structure to store the board history in a local cache
 - Use a more efficient algorithm to find the possible moves
 - Use a more efficient algorithm to find the winner
-- Use static inline functions where possible
-- Use const variables where possible
 - Add multithreading where possible
 - Save the games in a queue and create a job to write them to the disk
 - Fetch memcached keys in batches
@@ -65,4 +63,8 @@ AI:
 
 WebAssembly:
 - Build a version of the game using emscripten to run on the web
+
+Functionalities:
+- Print whole game (board, score, winner, moves, move count) and replace some of the calls to printBoard
+- Undo last move
 

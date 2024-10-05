@@ -1,7 +1,7 @@
 PCG_PATH = /Users/angeloocanamartins/dev/pcg-c-0.94
 MEMCACHED_PATH = /usr/local
 
-CFLAGS = -I$(PCG_PATH)/include -I$(MEMCACHED_PATH)/include
+CFLAGS = -I$(PCG_PATH)/include -I$(MEMCACHED_PATH)/include -O3 -march=native -flto
 LDFLAGS = -L$(PCG_PATH)/src -L$(MEMCACHED_PATH)/lib -lpcg_random -lm -lmemcached
 RPATH = -Wl,-rpath,$(MEMCACHED_PATH)/lib
 
