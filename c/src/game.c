@@ -13,17 +13,21 @@
 // Core
 /////////////////////////////////////////////////////////////////////////////////
 
-const char SUCCESS = 1;
-const char ERROR = 0;
-typedef char Result;
+typedef enum {
+    WHITE = 'O',
+    BLACK = 'X',
+    EMPTY = '_'
+} PositionValue;
+
+typedef enum {
+    SUCCESS = 1,
+    ERROR = 0
+} Result;
 
 const char BOARD_SIZE = 8;
 const char TOTAL_PIECES_PER_COLOR = BOARD_SIZE;
 const char TOTAL_PIECES = BOARD_SIZE + BOARD_SIZE;
 const char LAST_ROW_INDEX = BOARD_SIZE - 1;
-const char WHITE = 'O';
-const char BLACK = 'X';
-const char EMPTY = '_';
 
 // Max possible moves
 // Positions:
@@ -180,7 +184,7 @@ typedef struct LocalCacheNode {
     HistoryMovesForColor *pHistoryMovesForBlack;
 } LocalCacheNode;
 
-const int AI_VS_AI_MAX_GAMES = 1000;
+const int AI_VS_AI_MAX_GAMES = 100;
 const char MAX_EXPLORE_DEPTH = 5;
 const char MAX_EXPLORE_NEXT_POSITIONS = 2;
 
@@ -202,22 +206,22 @@ typedef struct MoveScore {
 void copyMove(Move *pSource, Move *pDestination);
 void setPosition(char x, char y, char value, Board *pBoard);
 void setCoordinates(Coordinates *pCoordinates, char value, Board *pBoard);
-char getPositionValue(char x, char y, Board *pBoard);
-char getCoordinatesValue(Coordinates *pCoordinates, Board *pBoard);
+char getPositionValue(char x, char y, const Board *pBoard);
+char getCoordinatesValue(Coordinates *pCoordinates, const Board *pBoard);
 char getInitialPositionValue(char y);
 void initializeBoard(Board *pBoard);
 void initializeGame(Game *pGame);
-char getWinner(Board *pBoard);
-char addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition);
+char getWinner(const Board *pBoard);
+Result addPositionToPossibleMoves(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition);
 int isValidIndex(char i);
 int isValidPosition(char x, char y);
-void addJumpsToPossibleMoves(char x, char addX, char y, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
-void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
-void getPossibleMovesForPosition(Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
+void addJumpsToPossibleMoves(char x, char addX, char y, char addY, const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
+void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
+void getPossibleMovesForPosition(const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition);
 void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition *pPossibleMovesForPosition);
-void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibleMoves);
-Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, Board *pBoard);
-Result isValidMove(Move *pMove, Board *pBoard);
+void getPossibleMovesForColor(const Board *pBoard, char color, PossibleMoves *pPossibleMoves);
+Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, const Board *pBoard);
+Result isValidMove(const Move *pMove, const Board *pBoard);
 void applyMoveCoordinatesToBoard(char fromX, char fromY, char toX, char toY, Board *pBoard);
 void applyMoveToBoard(Move *pMove, Board *pBoard);
 void applyMoveToGame(Move *pMove, Game *pGame);
@@ -278,7 +282,7 @@ void getHistory(Game *pGame, HistoryMovesForColor *pHistory);
 void writeHistory(Game *pGame, HistoryMovesForColor *pHistory);
 
 void copyBoard(Board *pSource, Board *pDestination);
-char getNextColor(char color);
+static inline char getNextColor(char color);
 
 // AI functions
 
@@ -295,7 +299,7 @@ void aiVsAiForNGames();
 
 // Print functions
 
-void printBoard(Board *pBoard);
+void printBoard(const Board *pBoard);
 void printMove(Move *pMove);
 void printPossibleMovesForPiece(PossibleMovesForPosition *pPossibleMovesForPosition);
 void printPossibleMoves(PossibleMoves *pPossibleMoves);
@@ -326,11 +330,11 @@ void setCoordinates(Coordinates *pCoordinates, char value, Board *pBoard) {
 }
 
 // TODO: Remove later
-char getPositionValue(char x, char y, Board *pBoard) {
+char getPositionValue(char x, char y, const Board *pBoard) {
     return (*pBoard)[x][y];
 }
 
-char getCoordinatesValue(Coordinates *pCoordinates, Board *pBoard) {
+char getCoordinatesValue(Coordinates *pCoordinates, const Board *pBoard) {
     return (*pBoard)[pCoordinates->x][pCoordinates->y];
 }
 
@@ -363,7 +367,7 @@ void initializeGame(Game *pGame) {
     pGame->turn = WHITE;
 }
 
-char getWinner(Board *pBoard) {
+char getWinner(const Board *pBoard) {
     char whiteCount = 0;
     char blackCount = 0;
 
@@ -433,7 +437,7 @@ int isValidPosition(char x, char y) {
     return isValidIndex(x) && isValidIndex(y) ? 1 : 0;
 }
 
-void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
     // printf("\naddJumpsToPossibleMoves from (%d,%d) add (%d,%d)\n", fromX, fromY, addX, addY);
     char overX = fromX + addX;
     char overY = fromY + addY;
@@ -459,7 +463,7 @@ void addJumpsToPossibleMoves(char fromX, char addX, char fromY, char addY, Board
     }
 }
 
-void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char addY, const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
     // printf("\naddPositionToPossibleMovesIfValid from (%d,%d) add (%d,%d)\n", fromX, fromY, addX, addY);
     char x = fromX + addX;
     char y = fromY + addY;
@@ -481,7 +485,7 @@ void addPositionToPossibleMovesIfValid(char fromX, char addX, char fromY, char a
 // Example:
 // possibleMovesForPosition = [0, 0, 0, 1, 1, 1] 
 // (x:0,y:0) can go to (x:0,y:1) (x:1,y:1) 
-void getPossibleMovesForPosition(Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
+void getPossibleMovesForPosition(const Board *pBoard, PossibleMovesForPosition *pPossibleMovesForPosition) {
     // printf("\ngetPossibleMovesForPosition\n");
     char x = (*pPossibleMovesForPosition)[0];
     char y = (*pPossibleMovesForPosition)[1];
@@ -505,7 +509,7 @@ void initializePossibleMovesForPosition(char x, char y, PossibleMovesForPosition
     // memset(possibleMoves[pieceCount] + 2, EMPTY, MAX_POSSIBLE_MOVES_ARRAY_LENGTH - 2);
 }
 
-void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibleMoves) {
+void getPossibleMovesForColor(const Board *pBoard, char color, PossibleMoves *pPossibleMoves) {
     // printf("\ngetPossibleMovesForColor %c\n", color);
     // printBoard(pBoard);
     char pieceCount = 0;
@@ -525,7 +529,7 @@ void getPossibleMovesForColor(Board *pBoard, char color, PossibleMoves *pPossibl
     }
 }
 
-Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, Board *pBoard) {
+Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, const Board *pBoard) {
     PossibleMovesForPosition possibleMovesForPosition;
     initializePossibleMovesForPosition(fromX, fromY, &possibleMovesForPosition);
     getPossibleMovesForPosition(pBoard, &possibleMovesForPosition);
@@ -546,7 +550,7 @@ Result isValidCoordinatesMove(char fromX, char fromY, char toX, char toY, Board 
     return ERROR;
 }
 
-Result isValidMove(Move *pMove, Board *pBoard) {
+Result isValidMove(const Move *pMove, const Board *pBoard) {
     return isValidCoordinatesMove(pMove->from.x, pMove->from.y, pMove->to.x, pMove->to.y, pBoard);
 }
 
@@ -695,6 +699,10 @@ void initializeHistoryMovesForColor(Game *pGame, HistoryMovesForColor *pHistory)
 
 LocalCacheNode *initializeLocalCacheNode() {
     LocalCacheNode *pLocalCacheNode = (LocalCacheNode*)malloc(sizeof(LocalCacheNode));
+    if (pLocalCacheNode == NULL) {
+        fprintf(stderr, "Memory allocation failed for LocalCacheNode\n");
+        abort();
+    }
     allocatedLocalCacheNodeCount++;
             
     // printf("\nInitializing local cache node allocatedLocalCacheNodeCount: %d\n", allocatedLocalCacheNodeCount);
@@ -736,27 +744,16 @@ LocalCacheNode *getTailLocalCacheNode(LocalCacheNode *pHeadNode, ColorPositions 
 }
 
 void freeLocalCacheNode(LocalCacheNode *pLocalCacheNode) {
-    // printf("\nFreeing local cache node\n");
-    if(pLocalCacheNode == NULL) {
-        // printf("\nLocal cache node is NULL\n");
+    if (pLocalCacheNode == NULL) {
         return;
     }
 
-    for(int i = 0; i < MAX_POSITIONS; i++) {
-        // printf("\nFreeing local cache node i %d\n", i);
+    for (int i = 0; i < MAX_POSITIONS; i++) {
         freeLocalCacheNode(pLocalCacheNode->pNext[i]);
     }
 
-    if(pLocalCacheNode->pHistoryMovesForWhite != NULL) {            
-        // printf("\nFreeing pHistoryMovesForWhite\n");
-        free(pLocalCacheNode->pHistoryMovesForWhite);
-    }
-    if(pLocalCacheNode->pHistoryMovesForBlack != NULL) {
-        // printf("\nFreeing pHistoryMovesForBlack\n");
-        free(pLocalCacheNode->pHistoryMovesForBlack);
-    }
-
-    // printf("\n free %p \n", pLocalCacheNode);
+    free(pLocalCacheNode->pHistoryMovesForWhite);
+    free(pLocalCacheNode->pHistoryMovesForBlack);
     free(pLocalCacheNode);
 }
 
@@ -958,7 +955,7 @@ Result getHistoryFromDisk(GameHash *hash, HistoryMovesForColor *pHistory) {
 
     FILE *pFile = fopen(fileNameFullPath, "r");
     if (pFile == NULL) {
-        // printf("Error opening board history file for read!\n");
+        // fprintf(stderr, "Error opening file %s: %s\n", fileNameFullPath, strerror(errno));
         filesNotFoundCount++;
         return ERROR;
     }
@@ -1361,7 +1358,7 @@ void aiVsAiForNGames() {
 // Terminal
 /////////////////////////////////////////////////////////////////////////////////
 
-void printBoard(Board *pBoard) {
+void printBoard(const Board *pBoard) {
     printf("\n  ");
 
     for(char x = 0; x < BOARD_SIZE; ++x)
