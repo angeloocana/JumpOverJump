@@ -299,7 +299,9 @@ void aiVsAiForNGames();
 
 // Print functions
 
+void printGame(Game *pGame);
 void printBoard(const Board *pBoard);
+void printMoves(Game *pGame);
 void printMove(Move *pMove);
 void printPossibleMovesForPiece(PossibleMovesForPosition *pPossibleMovesForPosition);
 void printPossibleMoves(PossibleMoves *pPossibleMoves);
@@ -681,7 +683,7 @@ void initializeHistoryMovesForColor(Game *pGame, HistoryMovesForColor *pHistory)
 
     PossibleMoves possibleMoves;
     getPossibleMovesForColor(&(pGame->board), pGame->turn, &possibleMoves);
-    // printBoard(pBoard);
+    // printGame(pGame);
 
     for(char pieceIndex = 0; pieceIndex < TOTAL_PIECES_PER_COLOR; ++pieceIndex)
     {
@@ -1261,7 +1263,7 @@ void backPropagateHistory(Game *pGame) {
    
     for(char i = 0; i <= pGame->moveIndex; ++i) {
         // printf("\nBack propagating move %d\n", i);
-        // printBoard(&board);
+        // printGame(pGame);
         HistoryMovesForColor boardHistory;
         getHistory(&gameCopy, &boardHistory);
         // printf("\nBack propagating board history:\n");
@@ -1312,18 +1314,7 @@ Result aiVsAi() {
         applyMoveToGame(&move, &game);
     }
 
-    PiecesPositions piecesPositions;
-    getPiecesPositions(&game, &piecesPositions);
-    
-    GameHash hash;
-    getGameHash(&piecesPositions, &hash);
-    
-    printf("\n\n-----------------------------------\n");
-    printf("\nHash: %s | ", hash);
-    printf("Winner: %c | ", game.winner);
-    printf("Move index: %d \n", game.moveIndex);
-    printBoard(&game.board);
-
+    printGame(&game);
     backPropagateHistory(&game);
     
     return game.winner != EMPTY ? SUCCESS : ERROR;
@@ -1358,6 +1349,23 @@ void aiVsAiForNGames() {
 // Terminal
 /////////////////////////////////////////////////////////////////////////////////
 
+void printGame(Game *pGame) {
+    PiecesPositions piecesPositions;
+    getPiecesPositions(pGame, &piecesPositions);
+    
+    GameHash hash;
+    getGameHash(&piecesPositions, &hash);
+    
+    printf("\n-----------------------------------\n");
+    printf("Hash: %s | ", hash);
+    printf("Turn: %c | ", pGame->turn);
+    printf("Move index: %d | ", pGame->moveIndex);
+    printf("Winner: %c \n", pGame->winner);
+    printBoard(&(pGame->board));
+    printMoves(pGame);
+    printf("\n-----------------------------------\n");
+}
+
 void printBoard(const Board *pBoard) {
     printf("\n  ");
 
@@ -1391,6 +1399,13 @@ void printBoard(const Board *pBoard) {
 
 void printMove(Move *pMove) {
     printf("\nMove: x%d,y%d to x%d,y%d\n", pMove->from.x, pMove->from.y, pMove->to.x, pMove->to.y);
+}
+
+void printMoves(Game *pGame) {
+    printf("\nMoves: ");
+    for(char i = 0; i < pGame->moveIndex; ++i) {
+        printf("(x%d,y%d to x%d,y%d) ", (pGame->moves)[i].from.x, (pGame->moves)[i].from.y, (pGame->moves)[i].to.x, (pGame->moves)[i].to.y);
+    }
 }
 
 void printPossibleMovesForPiece(PossibleMovesForPosition *pPossibleMovesForPosition) {
@@ -1477,7 +1492,7 @@ Result askForMove(Game *pGame) {
     }
 
     applyMoveToGame(&move, pGame);
-    printBoard(&(pGame->board));
+    printGame(pGame);
     return SUCCESS;
 }
 
@@ -1506,7 +1521,7 @@ int main() {
 
     Game game;
     initializeGame(&game);
-    printBoard(&game.board);
+    printGame(&game);
 
     Move move;
     
@@ -1538,7 +1553,7 @@ int main() {
                 break;
 
             case 'b':
-                printBoard(&game.board);
+                printGame(&game);
                 break;
 
             case 'h':
@@ -1558,7 +1573,7 @@ int main() {
                 guessBestMove(&game, &move);
                 printMove(&move);
                 applyMoveToGame(&move, &game);
-                printBoard(&game.board);
+                printGame(&game);
                 break;
 
             case 'e':
